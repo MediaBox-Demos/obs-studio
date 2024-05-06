@@ -34,7 +34,7 @@ if(OBS_CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.0)
   endmacro()
 
   # Add plugins in alphabetical order to retain order in IDE projects
-  add_obs_plugin(aja PLATFORMS WINDOWS MACOS LINUX WITH_MESSAGE)
+  # add_obs_plugin(aja PLATFORMS WINDOWS MACOS LINUX WITH_MESSAGE)
   add_obs_plugin(coreaudio-encoder PLATFORMS WINDOWS MACOS)
   add_obs_plugin(decklink PLATFORMS WINDOWS MACOS LINUX WITH_MESSAGE)
   add_obs_plugin(image-source)
@@ -50,7 +50,7 @@ if(OBS_CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.0)
   add_obs_plugin(mac-videotoolbox PLATFORMS MACOS)
   add_obs_plugin(mac-virtualcam PLATFORMS MACOS)
 
-  check_obs_browser()
+  # check_obs_browser()
 
   add_obs_plugin(obs-ffmpeg)
   add_obs_plugin(obs-filters)
@@ -62,7 +62,7 @@ if(OBS_CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.0)
   add_obs_plugin(obs-vst PLATFORMS WINDOWS MACOS LINUX WITH_MESSAGE)
   add_obs_plugin(obs-webrtc)
 
-  check_obs_websocket()
+  # check_obs_websocket()
 
   add_obs_plugin(obs-x264)
   add_obs_plugin(oss-audio PLATFORMS FREEBSD OPENBSD)
@@ -166,5 +166,5 @@ add_subdirectory(obs-filters)
 add_subdirectory(obs-transitions)
 add_subdirectory(rtmp-services)
 add_subdirectory(text-freetype2)
-add_subdirectory(aja)
+# add_subdirectory(aja)
 add_subdirectory(obs-webrtc)

@@ -12,7 +12,7 @@ if(OBS_CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.0)
   add_subdirectory(virtualcam-module)
 endif()
 
-legacy_check()
+# legacy_check()
 
 find_package(FFmpeg REQUIRED avcodec avutil)
 
@@ -37,13 +37,13 @@ target_link_libraries(
           strmiids
           winmm)
 
-if(TARGET OBS::virtualcam AND TARGET OBS::virtualcam-guid)
-  target_sources(win-dshow PRIVATE virtualcam.c)
-  target_link_libraries(win-dshow PRIVATE OBS::virtualcam-interface OBS::virtualcam-guid)
-  target_compile_definitions(win-dshow PRIVATE VIRTUALCAM_AVAILABLE)
+# if(TARGET OBS::virtualcam AND TARGET OBS::virtualcam-guid)
+#   target_sources(win-dshow PRIVATE virtualcam.c)
+#   target_link_libraries(win-dshow PRIVATE OBS::virtualcam-interface OBS::virtualcam-guid)
+#   target_compile_definitions(win-dshow PRIVATE VIRTUALCAM_AVAILABLE)
 
-  add_dependencies(win-dshow obs-virtualcam-module)
-endif()
+#   add_dependencies(win-dshow obs-virtualcam-module)
+# endif()
 
 # cmake-format: off
 set_target_properties_obs(win-dshow PROPERTIES FOLDER plugins/win-dshow PREFIX "")

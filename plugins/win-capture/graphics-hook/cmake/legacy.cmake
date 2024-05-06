@@ -49,7 +49,7 @@ if(TARGET Vulkan::Vulkan)
   target_compile_definitions(graphics-hook PRIVATE COMPILE_VULKAN_HOOK)
 
   add_target_resource(graphics-hook "${CMAKE_CURRENT_SOURCE_DIR}/obs-vulkan64.json" "obs-plugins/win-capture/")
-  add_target_resource(graphics-hook "${CMAKE_CURRENT_SOURCE_DIR}/obs-vulkan32.json" "obs-plugins/win-capture/")
+  # add_target_resource(graphics-hook "${CMAKE_CURRENT_SOURCE_DIR}/obs-vulkan32.json" "obs-plugins/win-capture/")
 endif()
 
 set(OBS_PLUGIN_DESTINATION "${OBS_DATA_DESTINATION}/obs-plugins/win-capture/")

@@ -42,14 +42,14 @@ if(TARGET Vulkan::Vulkan)
   target_compile_definitions(_graphics-hook INTERFACE COMPILE_VULKAN_HOOK)
 endif()
 
-legacy_check()
+# legacy_check()
 
 add_library(graphics-hook MODULE)
 add_library(OBS::graphics-hook ALIAS graphics-hook)
 
 target_link_libraries(graphics-hook PRIVATE _graphics-hook)
 
-include(cmake/32bit.cmake)
+# include(cmake/32bit.cmake)
 
 # cmake-format: off
 set_target_properties_obs(graphics-hook PROPERTIES FOLDER "plugins/win-capture" OUTPUT_NAME graphics-hook64 MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

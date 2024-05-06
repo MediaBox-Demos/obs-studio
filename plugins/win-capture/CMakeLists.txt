@@ -17,7 +17,7 @@ if(OBS_CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.0)
   target_include_directories(d3d8-api INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/d3d8-api")
 endif()
 
-legacy_check()
+# legacy_check()
 
 option(ENABLE_COMPAT_UPDATES "Checks for capture compatibility data updates" ON)
 

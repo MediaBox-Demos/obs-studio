@@ -81,7 +81,7 @@ if(OBS_CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.0)
               winmm)
 endif()
 
-legacy_check()
+# legacy_check()
 
 add_library(obs-virtualcam-module MODULE)
 add_library(OBS::virtualcam ALIAS obs-virtualcam-module)
@@ -99,7 +99,7 @@ configure_file(virtualcam-uninstall.bat.in virtualcam-uninstall.bat)
 target_add_resource(obs-virtualcam-module "${CMAKE_CURRENT_BINARY_DIR}/virtualcam-uninstall.bat"
                     "${OBS_DATA_DESTINATION}/obs-plugins/win-dshow")
 
-include(cmake/32bit.cmake)
+# include(cmake/32bit.cmake)
 
 # cmake-format: off
 set_target_properties_obs(obs-virtualcam-module PROPERTIES FOLDER plugins/win-dshow OUTPUT_NAME obs-virtualcam-module64)
