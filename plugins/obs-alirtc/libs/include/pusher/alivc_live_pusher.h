@@ -342,6 +342,10 @@ namespace AliVCSDK_ARTC
 		bool enableEncodeHevcBFrame{false};
 		/* 开启dsound音频采集*/
 		bool enableDsoundCapture {false};
+
+		/* 开启MPU旁路功能，默认打开 */
+		bool enableStartMpu{true};
+
     }AlivcLivePushConfig;
 
     /**

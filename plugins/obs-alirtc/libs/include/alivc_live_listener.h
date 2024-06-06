@@ -548,6 +548,7 @@ namespace AliVCSDK_ARTC
 		AlivcVideoCodecManufacturerX265 = 2,
 		AlivcVideoCodecManufacturerS265 = 3,
 		AlivcVideoCodecManufacturerFFMPEG = 4,
+        AlivcVideoCodecManufacturerS264 = 5,
 		AlivcVideoCodecManufacturerQsvIntel = 0x10,
 		AlivcVideoCodecManufacturerNvidia = 0x11,
 		AlivcVideoCodecManufacturerAMD = 0x12,
