@@ -1617,23 +1617,27 @@ bool OBSBasicSettings::ServiceSupportsCodecCheck()
 					      cur_audio_name, fb_video_name,
 					      fb_audio_name);
 
-	auto button = OBSMessageBox::question(this, WARNING_VAL("Title"), msg);
+	if (!IsALIRTC()) {
+		auto button = OBSMessageBox::question(this, WARNING_VAL("Title"), msg);
+		if (button == QMessageBox::No) {
+			if (lastServiceIdx == 0 &&
+				lastServiceIdx == ui->service->currentIndex())
+				QMetaObject::invokeMethod(ui->customServer, "setText",
+							Qt::QueuedConnection,
+							Q_ARG(QString,
+								lastCustomServer));
+			else
+				QMetaObject::invokeMethod(ui->service,
+							"setCurrentIndex",
+							Qt::QueuedConnection,
+							Q_ARG(int, lastServiceIdx));
+			return false;
+		}
+
+	}
+
 #undef WARNING_VAL
 
-	if (button == QMessageBox::No) {
-		if (lastServiceIdx == 0 &&
-		    lastServiceIdx == ui->service->currentIndex())
-			QMetaObject::invokeMethod(ui->customServer, "setText",
-						  Qt::QueuedConnection,
-						  Q_ARG(QString,
-							lastCustomServer));
-		else
-			QMetaObject::invokeMethod(ui->service,
-						  "setCurrentIndex",
-						  Qt::QueuedConnection,
-						  Q_ARG(int, lastServiceIdx));
-		return false;
-	}
 
 	ResetEncoders(true);
 	return true;
