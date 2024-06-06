@@ -68,6 +68,12 @@ class OBSBasicVCamConfig;
 #define AUX_AUDIO_4 Str("AuxAudioDevice4")
 
 #define SIMPLE_ENCODER_X264 "x264"
+#define SIMPLE_ENCODER_ALIRTC_X264 "alirtc_x264"
+#define SIMPLE_ENCODER_X265 "x265"
+#define SIMPLE_ENCODER_S265 "s265"
+#define SIMPLE_ENCODER_OPENH264 "openh264"
+#define SIMPLE_ENCODER_ALIRTC_QSV_H264 "alirtc_qsv_h264"
+#define SIMPLE_ENCODER_ALIRTC_NVIDIA_H264 "alirtc_nvidia_h264"
 #define SIMPLE_ENCODER_X264_LOWCPU "x264_lowcpu"
 #define SIMPLE_ENCODER_QSV "qsv"
 #define SIMPLE_ENCODER_QSV_AV1 "qsv_av1"
@@ -221,7 +227,8 @@ class OBSBasic : public OBSMainWindow {
 		Vertical,
 		Horizontal,
 	};
-
+public:
+	void GetConfigFPS(uint32_t &num, uint32_t &den) const;
 private:
 	obs_frontend_callbacks *api = nullptr;
 
@@ -241,6 +248,7 @@ private:
 	long disableSaving = 1;
 	bool projectChanged = false;
 	bool previewEnabled = true;
+	bool pkEnabled = true;
 	ContextBarSize contextBarSize = ContextBarSize_Normal;
 
 	std::deque<SourceCopyInfo> clipboard;
@@ -410,7 +418,7 @@ private:
 	void GetFPSInteger(uint32_t &num, uint32_t &den) const;
 	void GetFPSFraction(uint32_t &num, uint32_t &den) const;
 	void GetFPSNanoseconds(uint32_t &num, uint32_t &den) const;
-	void GetConfigFPS(uint32_t &num, uint32_t &den) const;
+
 
 	void UpdatePreviewScalingMenu();
 
@@ -475,6 +483,7 @@ private:
 
 	void CreateProgramDisplay();
 	void CreateProgramOptions();
+	void CreatePkProgramDisplay();
 	void AddQuickTransitionId(int id);
 	void AddQuickTransition();
 	void AddQuickTransitionHotkey(QuickTransition *qt);
@@ -502,6 +511,7 @@ private:
 	void QuickTransitionRemoveClicked();
 
 	void SetPreviewProgramMode(bool enabled);
+	void SetPKProgramMode(bool enabled);
 	void ResizeProgram(uint32_t cx, uint32_t cy);
 	void SetCurrentScene(obs_scene_t *scene, bool force = false);
 	static void RenderProgram(void *data, uint32_t cx, uint32_t cy);
@@ -517,6 +527,7 @@ private:
 	bool sceneDuplicationMode = true;
 	bool swapScenesMode = true;
 	volatile bool previewProgramMode = false;
+	volatile bool PKProgramMode = false;
 	obs_hotkey_pair_id togglePreviewProgramHotkeys = 0;
 	obs_hotkey_id transitionHotkey = 0;
 	obs_hotkey_id statsHotkey = 0;
@@ -916,6 +927,27 @@ public:
 		return os_atomic_load_bool(&previewProgramMode);
 	}
 
+	inline bool IsPKProgramMode() const
+	{
+		return os_atomic_load_bool(&PKProgramMode);
+	}
+
+
+	void on_push_started();
+	void on_push_stoped();
+	void on_reconnect_start();
+	void on_reconnect_failed();
+	void on_reconnect_sucess();
+	void on_connect_lost();
+	void on_connect_fail();
+	void on_error(int code);
+	void on_play_started();
+	void on_play_stop();
+	void on_play_error(int code);
+
+	QThread* mainThread_;
+
+
 	inline bool VCamEnabled() const { return vcamEnabled; }
 
 	bool Active() const;
@@ -1176,6 +1208,7 @@ private slots:
 	void HideTransitionProperties();
 
 	void on_modeSwitch_clicked();
+	void on_PKmodeSwitch_clicked();
 
 	// Source Context Buttons
 	void on_sourcePropertiesButton_clicked();
@@ -1237,6 +1270,7 @@ private slots:
 public slots:
 	void on_actionResetTransform_triggered();
 
+	void callbackMsg(const QString &title, const QString &text);
 	bool StreamingActive();
 	bool RecordingActive();
 	bool ReplayBufferActive();

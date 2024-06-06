@@ -1145,6 +1145,36 @@ uint64_t obs_output_get_total_bytes(const obs_output_t *output)
 	return output->info.get_total_bytes(output->context.data);
 }
 
+void obs_output_set_callback(const obs_output_t *output, struct obs_output_callback* callback)
+{
+	if (!obs_output_valid(output, "obs_output_set_callback"))
+		return ;
+	if (!output->info.set_output_callback)
+		return ;
+
+	output->info.set_output_callback(output->context.data, callback);
+}
+
+void obs_output_start_play_remote_url(const obs_output_t *output, const char * url, void * hwnd, int width, int height)
+{
+	if (!obs_output_valid(output, "obs_output_start_play_remote_url"))
+		return ;
+	if (!output->info.start_play_remote_url)
+		return ;
+
+	output->info.start_play_remote_url(output->context.data, url, hwnd, width, height);
+}
+
+void obs_output_stop_play_remote_url(const obs_output_t *output)
+{
+	if (!obs_output_valid(output, "obs_output_stop_play_remote_url"))
+		return ;
+	if (!output->info.stop_play_remote_url)
+		return ;
+
+	output->info.stop_play_remote_url(output->context.data);
+}
+
 int obs_output_get_frames_dropped(const obs_output_t *output)
 {
 	if (!obs_output_valid(output, "obs_output_get_frames_dropped"))

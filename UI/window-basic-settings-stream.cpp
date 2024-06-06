@@ -30,6 +30,7 @@ enum class ListOpt : int {
 	ShowAll = 1,
 	Custom,
 	WHIP,
+	ALIRTC,
 };
 
 enum class Section : int {
@@ -45,6 +46,11 @@ inline bool OBSBasicSettings::IsCustomService() const
 inline bool OBSBasicSettings::IsWHIP() const
 {
 	return ui->service->currentData().toInt() == (int)ListOpt::WHIP;
+}
+
+inline bool OBSBasicSettings::IsALIRTC() const
+{
+	return ui->service->currentData().toInt() == (int)ListOpt::ALIRTC;
 }
 
 void OBSBasicSettings::InitStreamPage()
@@ -100,6 +106,7 @@ void OBSBasicSettings::LoadStream1Settings()
 	bool is_rtmp_custom = (strcmp(type, "rtmp_custom") == 0);
 	bool is_rtmp_common = (strcmp(type, "rtmp_common") == 0);
 	bool is_whip = (strcmp(type, "whip_custom") == 0);
+	bool is_alirtc = (strcmp(type, "alirtc_custom") == 0);
 
 	loading = true;
 
@@ -107,13 +114,16 @@ void OBSBasicSettings::LoadStream1Settings()
 
 	const char *service = obs_data_get_string(settings, "service");
 	const char *server = obs_data_get_string(settings, "server");
+	const char *remoteserver = obs_data_get_string(settings, "remoteserver");
 	const char *key = obs_data_get_string(settings, "key");
 	protocol = QT_UTF8(obs_service_get_protocol(service_obj));
 	const char *bearer_token =
 		obs_data_get_string(settings, "bearer_token");
 
-	if (is_rtmp_custom || is_whip)
+	if (is_rtmp_custom || is_whip || is_alirtc) {
 		ui->customServer->setText(server);
+		ui->customRemoteServer->setText(remoteserver);		
+	}
 
 	if (is_rtmp_custom) {
 		ui->service->setCurrentIndex(0);
@@ -206,12 +216,15 @@ void OBSBasicSettings::SaveStream1Settings()
 {
 	bool customServer = IsCustomService();
 	bool whip = IsWHIP();
+	bool alirtc = IsALIRTC();
 	const char *service_id = "rtmp_common";
 
 	if (customServer) {
 		service_id = "rtmp_custom";
 	} else if (whip) {
 		service_id = "whip_custom";
+	} else if (alirtc) {
+		service_id = "alirtc_custom";
 	}
 
 	obs_service_t *oldService = main->GetService();
@@ -219,7 +232,7 @@ void OBSBasicSettings::SaveStream1Settings()
 
 	OBSDataAutoRelease settings = obs_data_create();
 
-	if (!customServer && !whip) {
+	if (!customServer && !whip && !alirtc) {
 		obs_data_set_string(settings, "service",
 				    QT_TO_UTF8(ui->service->currentText()));
 		obs_data_set_string(settings, "protocol", QT_TO_UTF8(protocol));
@@ -230,6 +243,9 @@ void OBSBasicSettings::SaveStream1Settings()
 		obs_data_set_string(
 			settings, "server",
 			QT_TO_UTF8(ui->customServer->text().trimmed()));
+		obs_data_set_string(
+			settings, "remoteserver",
+			QT_TO_UTF8(ui->customRemoteServer->text().trimmed()));
 		obs_data_set_bool(settings, "use_auth",
 				  ui->useAuth->isChecked());
 		if (ui->useAuth->isChecked()) {
@@ -264,7 +280,10 @@ void OBSBasicSettings::SaveStream1Settings()
 		obs_data_set_string(settings, "service", "WHIP");
 		obs_data_set_string(settings, "bearer_token",
 				    QT_TO_UTF8(ui->key->text()));
-	} else {
+	}  else if (alirtc) {
+		obs_data_set_string(settings, "service", "ALIRTC");
+	}
+	else {
 		obs_data_set_string(settings, "key",
 				    QT_TO_UTF8(ui->key->text()));
 	}
@@ -419,6 +438,10 @@ void OBSBasicSettings::LoadServices(bool showAll)
 				     QVariant((int)ListOpt::WHIP));
 	}
 
+	if (obs_is_output_protocol_registered("ALIRTC")) {
+		ui->service->addItem(QTStr("ALIRTC"),
+				     QVariant((int)ListOpt::ALIRTC));
+	}
 	if (!showAll) {
 		ui->service->addItem(
 			QTStr("Basic.AutoConfig.StreamPage.Service.ShowAll"),
@@ -554,11 +577,17 @@ void OBSBasicSettings::on_customServer_textChanged(const QString &)
 	SwapMultiTrack(QT_TO_UTF8(protocol));
 }
 
+void OBSBasicSettings::on_customRemoteServer_textChanged(const QString &text) {
+
+	lastRemoteCustomServer = ui->customRemoteServer->text();;
+}
+
 void OBSBasicSettings::ServiceChanged(bool resetFields)
 {
 	std::string service = QT_TO_UTF8(ui->service->currentText());
 	bool custom = IsCustomService();
 	bool whip = IsWHIP();
+	bool alirtc = IsALIRTC();
 
 	ui->disconnectAccount->setVisible(false);
 	ui->bandwidthTestEnable->setVisible(false);
@@ -575,7 +604,7 @@ void OBSBasicSettings::ServiceChanged(bool resetFields)
 	ui->authPwLabel->setVisible(custom);
 	ui->authPwWidget->setVisible(custom);
 
-	if (custom || whip) {
+	if (custom || whip || alirtc) {
 		ui->streamkeyPageLayout->insertRow(1, ui->serverLabel,
 						   ui->serverStackedWidget);
 
@@ -604,6 +633,10 @@ void OBSBasicSettings::ServiceChanged(bool resetFields)
 	if (service_check) {
 		auth = main->auth;
 		OnAuthConnected();
+	}
+
+	if (alirtc) {
+		ResetEncoders(true);
 	}
 }
 
@@ -704,17 +737,20 @@ OBSService OBSBasicSettings::SpawnTempService()
 {
 	bool custom = IsCustomService();
 	bool whip = IsWHIP();
+	bool alirtc = IsALIRTC();
 	const char *service_id = "rtmp_common";
 
 	if (custom) {
 		service_id = "rtmp_custom";
 	} else if (whip) {
 		service_id = "whip_custom";
+	} else if (alirtc) {
+		service_id = "alirtc_custom";
 	}
 
 	OBSDataAutoRelease settings = obs_data_create();
 
-	if (!custom && !whip) {
+	if (!custom && !whip && !alirtc) {
 		obs_data_set_string(settings, "service",
 				    QT_TO_UTF8(ui->service->currentText()));
 		obs_data_set_string(
@@ -982,8 +1018,12 @@ OBSService OBSBasicSettings::GetStream1Service()
 void OBSBasicSettings::UpdateServiceRecommendations()
 {
 	bool customServer = IsCustomService();
-	ui->ignoreRecommended->setVisible(!customServer);
-	ui->enforceSettingsLabel->setVisible(!customServer);
+	bool alirtc = IsALIRTC();
+	ui->ignoreRecommended->setVisible(!customServer && !alirtc);
+	ui->enforceSettingsLabel->setVisible(!customServer && !alirtc);
+
+	ui->customRemoteServer->setVisible(alirtc);
+	ui->PkLabel->setVisible(alirtc);
 
 	OBSService service = GetStream1Service();
 
@@ -1599,6 +1639,17 @@ bool OBSBasicSettings::ServiceSupportsCodecCheck()
 	return true;
 }
 
+static inline bool SetComboByValue(QComboBox *combo, const char *name)
+{
+	int idx = combo->findData(QT_UTF8(name));
+	if (idx != -1) {
+		combo->setCurrentIndex(idx);
+		return true;
+	}
+
+	return false;
+}
+
 #define TEXT_USE_STREAM_ENC \
 	QTStr("Basic.Settings.Output.Adv.Recording.UseStreamEncoder")
 
@@ -1663,6 +1714,14 @@ void OBSBasicSettings::ResetEncoders(bool streamOnly)
 
 	while (obs_enum_encoder_types(idx++, &type)) {
 		const char *name = obs_encoder_get_display_name(type);
+		bool isAlirtc = false;
+		if (
+			(strstr(name, "AliRtc") != NULL && !IsALIRTC()) || 
+			(IsALIRTC() && strstr(name, "AliRtc") == NULL)
+		)  {
+			isAlirtc = true;
+		}
+
 		const char *codec = obs_get_encoder_codec(type);
 		uint32_t caps = obs_get_encoder_caps(type);
 
@@ -1672,17 +1731,17 @@ void OBSBasicSettings::ResetEncoders(bool streamOnly)
 		if (obs_get_encoder_type(type) == OBS_ENCODER_VIDEO) {
 			if ((caps & ENCODER_HIDE_FLAGS) != 0)
 				continue;
-
-			if (service_supports_codec(vcodecs, codec))
+		
+			if (service_supports_codec(vcodecs, codec) && !isAlirtc)
 				ui->advOutEncoder->addItem(qName, qType);
-			if (!streamOnly)
+			if (!streamOnly && strstr(name, "AliRtc") == NULL)
 				ui->advOutRecEncoder->addItem(qName, qType);
 		}
 
 		if (obs_get_encoder_type(type) == OBS_ENCODER_AUDIO) {
-			if (service_supports_codec(acodecs, codec))
+			if (service_supports_codec(acodecs, codec) && !isAlirtc)
 				ui->advOutAEncoder->addItem(qName, qType);
-			if (!streamOnly)
+			if (!streamOnly && strstr(name, "AliRtc") == NULL)
 				ui->advOutRecAEncoder->addItem(qName, qType);
 		}
 	}
@@ -1690,7 +1749,7 @@ void OBSBasicSettings::ResetEncoders(bool streamOnly)
 	ui->advOutEncoder->model()->sort(0);
 	ui->advOutAEncoder->model()->sort(0);
 
-	if (!streamOnly) {
+	if (!streamOnly && !IsALIRTC()) {
 		ui->advOutRecEncoder->model()->sort(0);
 		ui->advOutRecEncoder->insertItem(0, TEXT_USE_STREAM_ENC,
 						 "none");
@@ -1699,12 +1758,33 @@ void OBSBasicSettings::ResetEncoders(bool streamOnly)
 						  "none");
 	}
 
+	if (IsALIRTC()) {
+		ui->advOutEncoder->setCurrentIndex(0);
+		ui->advOutRecAEncoder->setCurrentIndex(0);
+		ui->advOutRecEncoder->setCurrentIndex(0);
+		ui->advOutAEncoder->setCurrentIndex(0);
+		SetComboByValue(ui->colorFormat, "I420");
+		ui->advOutUseRescale->setVisible(false);
+		ui->advOutRescale->setVisible(false);
+		ui->advOutRescaleFilter->setVisible(false);
+
+		// sampleRate->setItemText(0, QCoreApplication::translate("OBSBasicSettings", "44.1 kHz", nullptr));
+	
+		ui->sampleRate->setCurrentIndex(1);
+		ui->channelSetup->setCurrentIndex(1);
+	} else {
+		ui->advOutUseRescale->setVisible(true);
+		ui->advOutRescale->setVisible(true);
+
+	}
+
 	/* ------------------------------------------------- */
 	/* load simple stream encoders                       */
 
 #define ENCODER_STR(str) QTStr("Basic.Settings.Output.Simple.Encoder." str)
 
-	ui->simpleOutStrEncoder->addItem(ENCODER_STR("Software"),
+	if (!IsALIRTC()) {
+		ui->simpleOutStrEncoder->addItem(ENCODER_STR("Software"),
 					 QString(SIMPLE_ENCODER_X264));
 #ifdef _WIN32
 	if (service_supports_encoder(vcodecs, "obs_qsv11"))
@@ -1771,13 +1851,50 @@ void OBSBasicSettings::ResetEncoders(bool streamOnly)
 	}
 #endif
 #endif
+	} else {
+		ui->simpleOutStrEncoder->addItem(ENCODER_STR("Software"),
+					 QString(SIMPLE_ENCODER_ALIRTC_X264));
+		ui->simpleOutStrEncoder->addItem(ENCODER_STR("Software.X265"),
+				QString(SIMPLE_ENCODER_X265));
+		ui->simpleOutStrEncoder->addItem(ENCODER_STR("Software.S265"),
+						QString(SIMPLE_ENCODER_S265));
+		ui->simpleOutStrEncoder->addItem(ENCODER_STR("Software.OPENH264"),
+						QString(SIMPLE_ENCODER_OPENH264));
+		if (service_supports_encoder(vcodecs, "alirtc_qsv")) {
+			ui->simpleOutStrEncoder->addItem(
+			ENCODER_STR("Hardware.QSV.H264"),
+			QString(SIMPLE_ENCODER_ALIRTC_QSV_H264));
+		}
+
+		if (service_supports_encoder(vcodecs, "alirtc_nvidia")) {
+			ui->simpleOutStrEncoder->addItem(
+			ENCODER_STR("Hardware.NVENC.H264"),
+			QString(SIMPLE_ENCODER_ALIRTC_NVIDIA_H264));
+		}
+
+		ui->simpleOutRecQuality->clear();
+
+		#define ADD_QUALITY(str)                                                     \
+			ui->simpleOutRecQuality->addItem(                                    \
+			QTStr("Basic.Settings.Output.Simple.RecordingQuality." str), \
+			QString(str));
+			
+		ADD_QUALITY("Small");
+		ADD_QUALITY("HQ");
+		ADD_QUALITY("Lossless");
+		ui->simpleOutRecQuality->setCurrentIndex(0);
+		ui->simpleOutStrEncoder->setCurrentIndex(0);
+	}
+
 	if (service_supports_encoder(acodecs, "CoreAudio_AAC") ||
 	    service_supports_encoder(acodecs, "libfdk_aac") ||
-	    service_supports_encoder(acodecs, "ffmpeg_aac"))
+	    service_supports_encoder(acodecs, "ffmpeg_aac") ||
+		service_supports_encoder(acodecs, "alirtc_aac")
+		)
 		ui->simpleOutStrAEncoder->addItem(
 			QTStr("Basic.Settings.Output.Simple.Codec.AAC.Default"),
 			"aac");
-	if (service_supports_encoder(acodecs, "ffmpeg_opus"))
+	if (service_supports_encoder(acodecs, "ffmpeg_opus") || service_supports_encoder(acodecs, "alirtc_opus"))
 		ui->simpleOutStrAEncoder->addItem(
 			QTStr("Basic.Settings.Output.Simple.Codec.Opus"),
 			"opus");
@@ -1789,7 +1906,12 @@ void OBSBasicSettings::ResetEncoders(bool streamOnly)
 	if (!lastAdvVideoEnc.isEmpty()) {
 		int idx = ui->advOutEncoder->findData(lastAdvVideoEnc);
 		if (idx == -1) {
-			lastAdvVideoEnc = get_adv_fallback(lastAdvVideoEnc);
+			if (IsALIRTC()) {
+				lastAdvVideoEnc = "alirtc_x264";
+			} else {
+				lastAdvVideoEnc =
+					get_adv_fallback(lastAdvVideoEnc);
+			}
 			ui->advOutEncoder->setProperty("changed",
 						       QVariant(true));
 			OutputsChanged();
@@ -1803,8 +1925,12 @@ void OBSBasicSettings::ResetEncoders(bool streamOnly)
 	if (!lastAdvAudioEnc.isEmpty()) {
 		int idx = ui->advOutAEncoder->findData(lastAdvAudioEnc);
 		if (idx == -1) {
-			lastAdvAudioEnc =
-				get_adv_audio_fallback(lastAdvAudioEnc);
+			if (IsALIRTC()) {
+				lastAdvAudioEnc = "alirtc_opus";
+			} else {
+				lastAdvAudioEnc =
+					get_adv_audio_fallback(lastAdvAudioEnc);
+			}
 			ui->advOutAEncoder->setProperty("changed",
 							QVariant(true));
 			OutputsChanged();
@@ -1819,6 +1945,12 @@ void OBSBasicSettings::ResetEncoders(bool streamOnly)
 		int idx = ui->simpleOutStrEncoder->findData(lastVideoEnc);
 		if (idx == -1) {
 			lastVideoEnc = get_simple_fallback(lastVideoEnc);
+			if (IsALIRTC()) {
+				lastVideoEnc = SIMPLE_ENCODER_ALIRTC_X264;
+			} else {
+				lastVideoEnc =
+					get_adv_audio_fallback(lastVideoEnc);
+			}
 			ui->simpleOutStrEncoder->setProperty("changed",
 							     QVariant(true));
 			OutputsChanged();

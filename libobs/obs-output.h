@@ -38,6 +38,24 @@ extern "C" {
 
 struct encoder_packet;
 
+
+struct obs_output_callback {
+
+	void *(*on_push_started)(void *);
+	void *(*on_push_stoped)(void *);
+	void *(*on_reconnect_start)(void *);
+	void *(*on_reconnect_failed)(void *);
+	void *(*on_reconnect_sucess)(void *);
+	void *(*on_connect_lost)(void *);
+	void *(*on_connect_fail)(void *);
+	void *(*on_error)(void *, int code);
+	void *(*on_play_started)(void *);
+	void *(*on_play_stop)(void *);
+	void *(*on_play_error)(void *, int code);
+
+	void *data;
+};
+
 struct obs_output_info {
 	/* required */
 	const char *id;
@@ -52,6 +70,10 @@ struct obs_output_info {
 	bool (*start)(void *data);
 	void (*stop)(void *data, uint64_t ts);
 
+	void (*set_output_callback)(void *priv_data, struct obs_output_callback* callback);
+
+	void (*start_play_remote_url)(void *data, const char * url, void * hwnd, int width, int height);
+	void (*stop_play_remote_url)(void *data);
 	void (*raw_video)(void *data, struct video_data *frame);
 	void (*raw_audio)(void *data, struct audio_data *frames);
 

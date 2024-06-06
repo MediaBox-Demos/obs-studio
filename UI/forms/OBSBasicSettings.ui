@@ -146,7 +146,7 @@
      <item>
       <widget class="QStackedWidget" name="settingsPages">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="generalPage">
         <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -178,8 +178,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>764</width>
-              <height>1298</height>
+              <width>589</width>
+              <height>1257</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -916,8 +916,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>781</width>
-              <height>680</height>
+              <width>366</width>
+              <height>109</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_1337">
@@ -1090,7 +1090,7 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="loginPage">
             <layout class="QFormLayout" name="loginPageLayout">
@@ -1178,12 +1178,6 @@
            </widget>
            <widget class="QWidget" name="streamKeyPage">
             <layout class="QFormLayout" name="streamkeyPageLayout">
-             <property name="fieldGrowthPolicy">
-              <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-             </property>
-             <property name="labelAlignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
              <item row="0" column="0">
               <widget class="QLabel" name="serverLabel">
                <property name="text">
@@ -1306,7 +1300,7 @@
                </layout>
               </widget>
              </item>
-             <item row="3" column="0">
+             <item row="2" column="0">
               <spacer name="horizontalSpacer_18">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -1319,7 +1313,41 @@
                </property>
               </spacer>
              </item>
-             <item row="4" column="1">
+             <item row="2" column="1">
+              <layout class="QHBoxLayout" name="horizontalLayout_15">
+               <item>
+                <widget class="QPushButton" name="connectAccount2">
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="text">
+                  <string>Basic.AutoConfig.StreamPage.ConnectAccount</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_19">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="connectedAccountLabel">
+               <property name="text">
+                <string>Basic.AutoConfig.StreamPage.ConnectedAccount</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
               <layout class="QHBoxLayout" name="horizontalLayout_23">
                <property name="spacing">
                 <number>8</number>
@@ -1362,21 +1390,58 @@
                </item>
               </layout>
              </item>
-             <item row="6" column="1">
+             <item row="4" column="1">
+              <layout class="QHBoxLayout" name="horizontalLayout_28">
+               <item>
+                <widget class="QPushButton" name="useStreamKeyAdv">
+                 <property name="text">
+                  <string>Basic.AutoConfig.StreamPage.UseStreamKeyAdvanced</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_28">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </item>
+             <item row="5" column="1">
               <widget class="QCheckBox" name="bandwidthTestEnable">
                <property name="text">
                 <string>Basic.Settings.Stream.BandwidthTestMode</string>
                </property>
               </widget>
              </item>
-             <item row="7" column="1">
+             <item row="6" column="1">
               <widget class="QCheckBox" name="useAuth">
                <property name="text">
                 <string>Basic.Settings.Stream.Custom.UseAuthentication</string>
                </property>
               </widget>
              </item>
-             <item row="9" column="0">
+             <item row="7" column="0">
+              <widget class="QLabel" name="twitchAddonLabel">
+               <property name="text">
+                <string>Basic.Settings.Stream.TTVAddon</string>
+               </property>
+               <property name="buddy">
+                <cstring>twitchAddonDropdown</cstring>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="1">
+              <widget class="QComboBox" name="twitchAddonDropdown"/>
+             </item>
+             <item row="8" column="0">
               <widget class="QLabel" name="authUsernameLabel">
                <property name="text">
                 <string>Basic.Settings.Stream.Custom.Username</string>
@@ -1386,10 +1451,10 @@
                </property>
               </widget>
              </item>
-             <item row="9" column="1">
+             <item row="8" column="1">
               <widget class="QLineEdit" name="authUsername"/>
              </item>
-             <item row="10" column="0">
+             <item row="9" column="0">
               <widget class="QLabel" name="authPwLabel">
                <property name="text">
                 <string>Basic.Settings.Stream.Custom.Password</string>
@@ -1399,7 +1464,7 @@
                </property>
               </widget>
              </item>
-             <item row="10" column="1">
+             <item row="9" column="1">
               <widget class="QFrame" name="authPwWidget">
                <layout class="QHBoxLayout" name="horizontalLayout_25">
                 <property name="leftMargin">
@@ -1431,27 +1496,14 @@
                </layout>
               </widget>
              </item>
-             <item row="8" column="1">
-              <widget class="QComboBox" name="twitchAddonDropdown"/>
-             </item>
-             <item row="8" column="0">
-              <widget class="QLabel" name="twitchAddonLabel">
-               <property name="text">
-                <string>Basic.Settings.Stream.TTVAddon</string>
-               </property>
-               <property name="buddy">
-                <cstring>twitchAddonDropdown</cstring>
-               </property>
-              </widget>
-             </item>
-             <item row="11" column="1">
+             <item row="10" column="1">
               <widget class="QCheckBox" name="ignoreRecommended">
                <property name="text">
                 <string>Basic.Settings.Stream.IgnoreRecommended</string>
                </property>
               </widget>
              </item>
-             <item row="12" column="1">
+             <item row="11" column="1">
               <widget class="QLabel" name="enforceSettingsLabel">
                <property name="text">
                 <string notr="true"/>
@@ -1464,69 +1516,23 @@
                </property>
               </widget>
              </item>
-             <item row="5" column="1">
-              <layout class="QHBoxLayout" name="horizontalLayout_28">
-               <item>
-                <widget class="QPushButton" name="useStreamKeyAdv">
-                 <property name="text">
-                  <string>Basic.AutoConfig.StreamPage.UseStreamKeyAdvanced</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_28">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="connectedAccountLabel">
+             <item row="12" column="0">
+              <widget class="QLabel" name="PkLabel">
                <property name="text">
-                <string>Basic.AutoConfig.StreamPage.ConnectedAccount</string>
+                <string>Basic.AutoConfig.StreamPage.PkUrl</string>
                </property>
               </widget>
              </item>
-             <item row="3" column="1">
-              <layout class="QHBoxLayout" name="horizontalLayout_15">
-               <item>
-                <widget class="QPushButton" name="connectAccount2">
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Basic.AutoConfig.StreamPage.ConnectAccount</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_19">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
+             <item row="12" column="1">
+              <widget class="QLineEdit" name="customRemoteServer"/>
              </item>
             </layout>
            </widget>
           </widget>
          </item>
         </layout>
+        <zorder>streamStackWidget</zorder>
+        <zorder>widget_5</zorder>
        </widget>
        <widget class="QWidget" name="outputPage">
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1664,8 +1670,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>518</width>
-                     <height>609</height>
+                     <width>556</width>
+                     <height>617</height>
                     </rect>
                    </property>
                    <property name="sizePolicy">
@@ -2461,8 +2467,8 @@
                         <rect>
                          <x>0</x>
                          <y>0</y>
-                         <width>431</width>
-                         <height>180</height>
+                         <width>463</width>
+                         <height>188</height>
                         </rect>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -2894,8 +2900,8 @@
                             <rect>
                              <x>0</x>
                              <y>0</y>
-                             <width>518</width>
-                             <height>371</height>
+                             <width>567</width>
+                             <height>379</height>
                             </rect>
                            </property>
                            <property name="sizePolicy">
@@ -3541,8 +3547,8 @@
                             <rect>
                              <x>0</x>
                              <y>0</y>
-                             <width>634</width>
-                             <height>467</height>
+                             <width>662</width>
+                             <height>465</height>
                             </rect>
                            </property>
                            <layout class="QVBoxLayout" name="verticalLayout_27">
@@ -4078,8 +4084,8 @@
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>267</width>
-                            <height>510</height>
+                            <width>269</width>
+                            <height>528</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_28">
@@ -5151,8 +5157,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>608</width>
-              <height>520</height>
+              <width>643</width>
+              <height>543</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_50">
@@ -6084,7 +6090,7 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>196</width>
+              <width>216</width>
               <height>28</height>
              </rect>
             </property>
@@ -6162,8 +6168,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>704</width>
-              <height>347</height>
+              <width>806</width>
+              <height>316</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_42">
@@ -7071,8 +7077,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>713</width>
-              <height>955</height>
+              <width>778</width>
+              <height>982</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_23">

@@ -275,12 +275,15 @@ private:
 	void InitStreamPage();
 	inline bool IsCustomService() const;
 	inline bool IsWHIP() const;
+	inline bool IsALIRTC() const;
+	
 	void LoadServices(bool showAll);
 	void OnOAuthStreamKeyConnected();
 	void OnAuthConnected();
 	QString lastService;
 	QString protocol;
 	QString lastCustomServer;
+	QString lastRemoteCustomServer;
 	int prevLangIndex;
 	bool prevBrowserAccel;
 
@@ -422,6 +425,7 @@ private slots:
 
 	void on_service_currentIndexChanged(int idx);
 	void on_customServer_textChanged(const QString &text);
+	void on_customRemoteServer_textChanged(const QString &text);
 	void on_simpleOutputBrowse_clicked();
 	void on_advOutRecPathBrowse_clicked();
 	void on_advOutFFPathBrowse_clicked();
@@ -459,6 +463,7 @@ private slots:
 	void AudioChangedRestart();
 	void ReloadAudioSources();
 	void SurroundWarning(int idx);
+	void SampleRateWarning(int idx) ;
 	void SpeakerLayoutChanged(int idx);
 	void LowLatencyBufferingChanged(bool checked);
 	void UpdateAudioWarnings();

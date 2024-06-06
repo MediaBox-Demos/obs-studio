@@ -732,6 +732,35 @@ void OBSBasic::SetCurrentScene(OBSSource scene, bool force)
 	}
 }
 
+void OBSBasic::CreatePkProgramDisplay() {
+	program = new OBSQTDisplay();
+	program->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(program.data(), &QWidget::customContextMenuRequested, this,
+		&OBSBasic::ProgramViewContextMenuRequested);
+	/*
+	auto displayResize = [this]() {
+		struct obs_video_info ovi;
+
+		if (obs_get_video_info(&ovi))
+			ResizeProgram(ovi.base_width, ovi.base_height);
+	};
+
+	connect(program.data(), &OBSQTDisplay::DisplayResized, displayResize);
+
+	auto addDisplay = [this](OBSQTDisplay *window) {
+		 obs_display_add_draw_callback(window->GetDisplay(),
+		 			      OBSBasic::RenderProgram, this);
+		struct obs_video_info ovi;
+		if (obs_get_video_info(&ovi))
+			ResizeProgram(ovi.base_width, ovi.base_height);
+
+	};
+
+	connect(program.data(), &OBSQTDisplay::DisplayCreated, addDisplay);
+	*/
+	program->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+}
+
 void OBSBasic::CreateProgramDisplay()
 {
 	program = new OBSQTDisplay();
@@ -750,17 +779,18 @@ void OBSBasic::CreateProgramDisplay()
 	connect(program.data(), &OBSQTDisplay::DisplayResized, displayResize);
 
 	auto addDisplay = [this](OBSQTDisplay *window) {
-		obs_display_add_draw_callback(window->GetDisplay(),
-					      OBSBasic::RenderProgram, this);
-
+		 obs_display_add_draw_callback(window->GetDisplay(),
+		 			      OBSBasic::RenderProgram, this);
 		struct obs_video_info ovi;
 		if (obs_get_video_info(&ovi))
 			ResizeProgram(ovi.base_width, ovi.base_height);
+
 	};
 
 	connect(program.data(), &OBSQTDisplay::DisplayCreated, addDisplay);
 
 	program->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
 }
 
 void OBSBasic::TransitionClicked()
@@ -979,6 +1009,112 @@ int OBSBasic::GetTbarPosition()
 void OBSBasic::on_modeSwitch_clicked()
 {
 	SetPreviewProgramMode(!IsPreviewProgramMode());
+}
+
+static QString format_callback_str(const char* event, const char* code) {
+	std::string str = "get callback event:";
+	str += event;
+	str += " code=";
+	str += code;
+	return QString::fromUtf8(str.c_str());;
+}
+static QString format_callback_str_title() {
+	std::string str = "callback information";
+	return QString::fromUtf8(str.c_str());;
+}
+
+void OBSBasic::on_PKmodeSwitch_clicked() {
+	SetPKProgramMode(!IsPKProgramMode());
+}
+
+
+void OBSBasic::callbackMsg(const QString &title, const QString &text) {
+	OBSMessageBox::information(this, title, text);
+}
+
+
+void OBSBasic::on_push_started() {
+
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString, format_callback_str("on_push_started", "0")));
+}
+
+void OBSBasic::on_push_stoped() {
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString, format_callback_str("on_push_stoped", "0")));
+}
+
+void OBSBasic::on_reconnect_start() {
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString, format_callback_str("on_reconnect_start", "0")));
+}
+
+void OBSBasic::on_reconnect_failed() {
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString, format_callback_str("on_reconnect_failed", "0")));
+}
+
+void OBSBasic::on_reconnect_sucess() {
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString,
+		      format_callback_str("on_reconnect_sucess", "0")));
+}
+
+void OBSBasic::on_connect_lost() {
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString,
+		      format_callback_str("on_connect_lost", "0")));
+}
+
+void OBSBasic::on_connect_fail() {
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString, format_callback_str("on_connect_fail", "0")));
+}
+
+void OBSBasic::on_error(int code) {
+	std::string code_s = std::to_string(code);
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString,
+		      format_callback_str("on_error", code_s.c_str())));
+}
+
+void OBSBasic::on_play_started() {
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString, format_callback_str("on_play_started", "0")));
+}
+
+void OBSBasic::on_play_stop() {
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString, format_callback_str("on_play_stop", "0")));
+}
+
+void OBSBasic::on_play_error(int code) {
+	std::string code_s = std::to_string(code);
+	QMetaObject::invokeMethod(
+		this, "callbackMsg", Qt::QueuedConnection,
+		Q_ARG(QString, format_callback_str_title()),
+		Q_ARG(QString,
+		      format_callback_str("on_play_stop", code_s.c_str())));
 }
 
 static inline void ResetQuickTransitionText(QuickTransition *qt)
@@ -1600,6 +1736,140 @@ void OBSBasic::EnableTransitionWidgets(bool enable)
 
 	if (transitionButton)
 		transitionButton->setEnabled(enable);
+}
+
+void OBSBasic::SetPKProgramMode(bool enabled)
+{
+	if (IsPKProgramMode() == enabled)
+		return;
+
+	ui->PKmodeSwitch->setChecked(enabled);
+	os_atomic_set_bool(&PKProgramMode, enabled);
+
+	if (IsPKProgramMode()) {
+		if (!pkEnabled)
+			EnablePreviewDisplay(true);
+
+		CreatePkProgramDisplay();
+		// CreateProgramOptions();
+
+		OBSScene curScene = GetCurrentScene();
+
+		OBSSceneAutoRelease dup;
+		if (sceneDuplicationMode) {
+			dup = obs_scene_duplicate(
+				curScene,
+				obs_source_get_name(
+					obs_scene_get_source(curScene)),
+				editPropertiesMode
+					? OBS_SCENE_DUP_PRIVATE_COPY
+					: OBS_SCENE_DUP_PRIVATE_REFS);
+		} else {
+			dup = std::move(OBSScene(curScene));
+		}
+
+		OBSSourceAutoRelease transition = obs_get_output_source(0);
+		obs_source_t *dup_source = obs_scene_get_source(dup);
+		obs_transition_set(transition, dup_source);
+
+		if (curScene) {
+			obs_source_t *source = obs_scene_get_source(curScene);
+			obs_source_inc_showing(source);
+			lastScene = OBSGetWeakRef(source);
+			programScene = OBSGetWeakRef(source);
+		}
+
+		// RefreshQuickTransitions();
+
+		programLabel =
+			new QLabel(QTStr("StudioMode.ProgramSceneLabel"), this);
+		programLabel->setSizePolicy(QSizePolicy::Ignored,
+					    QSizePolicy::Preferred);
+		programLabel->setProperty("themeID", "previewProgramLabels");
+
+		programWidget = new QWidget();
+		programLayout = new QVBoxLayout();
+
+		programLayout->setContentsMargins(0, 0, 0, 0);
+		programLayout->setSpacing(0);
+
+		programLayout->addWidget(programLabel);
+		programLayout->addWidget(program);
+
+		programWidget->setLayout(programLayout);
+
+		ui->previewLayout->addWidget(programOptions);
+		ui->previewLayout->addWidget(programWidget);
+		ui->previewLayout->setAlignment(programOptions,
+						Qt::AlignCenter);
+
+		void *hwnd = (void *)program->windowHandle()->winId();
+		QSize size = GetPixelSize(program);
+
+		
+		if (outputHandler->streamOutput) {
+			obs_data_t *settings = obs_output_get_settings(outputHandler->streamOutput);
+			std::string remoteserver = obs_data_get_string(settings, "remoteserver");
+			obs_output_start_play_remote_url(
+				outputHandler->streamOutput,
+				remoteserver.c_str(),
+				//"artc://live.aliyun.com/play/213?sdkAppId=e4d7f08a-01fe-41b5-a091-fe41060aab1f&userId=qwqe&token=c1075cb2643e70e756b57c6d492966cdd5cf15acab3007b0d22c9962cda39ee1&timestamp=1716542736",
+				hwnd, size.width(), size.height());
+		}
+
+		// if (api)
+		// 	api->on_event(OBS_FRONTEND_EVENT_STUDIO_MODE_ENABLED);
+
+		blog(LOG_INFO, "Switched to PkPreview/Program mode");
+		blog(LOG_INFO, "-----------------------------"
+			       "-------------------");
+	} else {
+		OBSSource actualProgramScene = OBSGetStrongRef(programScene);
+		if (!actualProgramScene)
+			actualProgramScene = GetCurrentSceneSource();
+		else
+			SetCurrentScene(actualProgramScene, true);
+		TransitionToScene(actualProgramScene, true);
+		if (outputHandler->streamOutput) {
+			obs_output_stop_play_remote_url(
+				outputHandler->streamOutput);
+		}
+
+		delete programOptions;
+		delete program;
+		delete programLabel;
+		delete programWidget;
+
+		if (lastScene) {
+			OBSSource actualLastScene = OBSGetStrongRef(lastScene);
+			if (actualLastScene)
+				obs_source_dec_showing(actualLastScene);
+			lastScene = nullptr;
+		}
+
+		programScene = nullptr;
+		swapScene = nullptr;
+		prevFTBSource = nullptr;
+
+		for (QuickTransition &qt : quickTransitions)
+			qt.button = nullptr;
+
+		if (!previewEnabled)
+			EnablePreviewDisplay(false);
+
+		ui->transitions->setEnabled(true);
+		tBarActive = false;
+
+		// if (api)
+		//	api->on_event(OBS_FRONTEND_EVENT_STUDIO_MODE_DISABLED);
+
+		blog(LOG_INFO, "Switched to regular Preview mode");
+		blog(LOG_INFO, "-----------------------------"
+			       "-------------------");
+	}
+
+	ResetUI();
+	UpdateTitleBar();
 }
 
 void OBSBasic::SetPreviewProgramMode(bool enabled)

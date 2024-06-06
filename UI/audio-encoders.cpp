@@ -165,7 +165,8 @@ static void PopulateBitrateLists()
 				continue;
 
 			if (strcmp(id, "ffmpeg_aac") == 0 ||
-			    strcmp(id, "ffmpeg_opus") == 0)
+			    strcmp(id, "ffmpeg_opus") == 0
+				)
 				continue;
 
 			std::string encoder = id;

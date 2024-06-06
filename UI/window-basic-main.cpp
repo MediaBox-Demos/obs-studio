@@ -1429,6 +1429,30 @@ bool OBSBasic::LoadService()
 					  "ffmpeg_opus");
 	}
 
+	if (strcmp(obs_service_get_protocol(service), "ALIRTC") == 0) {
+			const char *option = config_get_string(
+			basicConfig, "SimpleOutput", "StreamAudioEncoder");
+		if (strcmp(option, "opus") != 0)
+			config_set_string(basicConfig, "SimpleOutput",
+					  "StreamAudioEncoder", "opus");
+
+		option = config_get_string(basicConfig, "AdvOut",
+					   "AudioEncoder");
+
+		const char *encoder_codec = obs_get_encoder_codec(option);
+		if (!encoder_codec || strcmp(encoder_codec, "opus") != 0)
+			config_set_string(basicConfig, "AdvOut", "AudioEncoder",
+					  "alirtc_opus");
+
+		option = config_get_string(basicConfig, "AdvOut",
+					   "Encoder");
+
+		encoder_codec = obs_get_encoder_codec(option);
+		if (!encoder_codec || strcmp(encoder_codec, "x264") != 0)
+			config_set_string(basicConfig, "AdvOut", "Encoder",
+					  "alirtc_x264");
+	}
+
 	return true;
 }
 
@@ -2007,7 +2031,7 @@ static inline void LogEncoders()
 void OBSBasic::OBSInit()
 {
 	ProfileScope("OBSBasic::OBSInit");
-
+	mainThread_ = QThread::currentThread();
 	const char *sceneCollection = config_get_string(
 		App()->GlobalConfig(), "Basic", "SceneCollectionFile");
 	char savePath[1024];
@@ -7297,6 +7321,10 @@ inline void OBSBasic::OnDeactivate()
 void OBSBasic::StopStreaming()
 {
 	SaveProject();
+
+	if (IsPKProgramMode()) {
+		on_PKmodeSwitch_clicked();
+	}
 
 	if (outputHandler->StreamingActive())
 		outputHandler->StopStreaming(streamingStopping);

@@ -61,6 +61,7 @@ if(OBS_CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.0)
   add_obs_plugin(obs-transitions)
   add_obs_plugin(obs-vst PLATFORMS WINDOWS MACOS LINUX WITH_MESSAGE)
   add_obs_plugin(obs-webrtc)
+  add_obs_plugin(obs-alirtc)
 
   # check_obs_websocket()
 
@@ -101,6 +102,7 @@ if(OS_WINDOWS)
   add_subdirectory(obs-text)
   add_subdirectory(vlc-video)
   add_subdirectory(obs-vst)
+  add_subdirectory(obs-alirtc)
 
   check_obs_browser()
 elseif(OS_MACOS)

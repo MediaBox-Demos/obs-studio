@@ -7,7 +7,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1086</width>
+    <width>1116</width>
     <height>729</height>
    </rect>
   </property>
@@ -486,7 +486,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1086</width>
+     <width>1116</width>
      <height>22</height>
     </rect>
    </property>
@@ -739,7 +739,7 @@
   <widget class="OBSBasicStatusBar" name="statusbar"/>
   <widget class="OBSDock" name="scenesDock">
    <property name="features">
-    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
    <property name="windowTitle">
     <string>Basic.Main.Scenes</string>
@@ -861,7 +861,7 @@
   </widget>
   <widget class="OBSDock" name="sourcesDock">
    <property name="features">
-    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
    <property name="windowTitle">
     <string>Basic.Main.Sources</string>
@@ -983,7 +983,7 @@
   </widget>
   <widget class="OBSDock" name="mixerDock">
    <property name="features">
-    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
    <property name="windowTitle">
     <string>Mixer</string>
@@ -1052,7 +1052,7 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>225</width>
+              <width>230</width>
               <height>16</height>
              </rect>
             </property>
@@ -1106,7 +1106,7 @@
               <x>0</x>
               <y>0</y>
               <width>16</width>
-              <height>192</height>
+              <height>28</height>
              </rect>
             </property>
             <property name="sizePolicy">
@@ -1160,7 +1160,7 @@
   </widget>
   <widget class="OBSDock" name="transitionsDock">
    <property name="features">
-    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
    <property name="windowTitle">
     <string>Basic.SceneTransitions</string>
@@ -1401,7 +1401,7 @@
   </widget>
   <widget class="OBSDock" name="controlsDock">
    <property name="features">
-    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
    <property name="windowTitle">
     <string>Basic.Main.Controls</string>
@@ -1429,21 +1429,6 @@
      <item>
       <widget class="QFrame" name="controlsFrame">
        <layout class="QVBoxLayout" name="buttonsVLayout">
-        <property name="spacing">
-         <number>0</number>
-        </property>
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
@@ -1544,6 +1529,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="modeSwitch">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -1558,6 +1546,28 @@
           </property>
           <property name="text">
            <string>Basic.TogglePreviewProgramMode</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="PKmodeSwitch">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Basic.TogglePKProgramMode</string>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -2405,12 +2415,12 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>976</x>
-     <y>601</y>
+     <x>1087</x>
+     <y>645</y>
     </hint>
     <hint type="destinationlabel">
      <x>862</x>
-     <y>-11</y>
+     <y>0</y>
     </hint>
    </hints>
   </connection>

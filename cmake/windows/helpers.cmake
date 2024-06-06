@@ -412,6 +412,14 @@ function(_bundle_dependencies target)
     list(REMOVE_DUPLICATES library_paths_${config})
   endforeach()
 
+  file(GLOB ALIRTC_LIBRARY_DEBUG_LIST "${OBS_OUTPUT_DIR}/../../plugins/obs-alirtc/libs/x64/Debug/*.dll" "${OBS_OUTPUT_DIR}/../../plugins/obs-alirtc/libs/x64/Debug/*.pdb")
+  file(GLOB ALIRTC_LIBRARY_RELEASE_LIST "${OBS_OUTPUT_DIR}/../../plugins/obs-alirtc/libs/x64/Release/*.dll" "${OBS_OUTPUT_DIR}/../../plugins/obs-alirtc/libs/x64/Release/*.pdb")  
+
+  list(APPEND library_paths_DEBUG ${ALIRTC_LIBRARY_DEBUG_LIST})
+  list(APPEND library_paths_RELWITHDEBINFO ${ALIRTC_LIBRARY_RELEASE_LIST})
+  list(APPEND library_paths_RELEASE ${ALIRTC_LIBRARY_RELEASE_LIST})
+  list(APPEND library_paths_MINSIZEREL ${ALIRTC_LIBRARY_RELEASE_LIST})
+
   add_custom_command(
     TARGET ${target}
     POST_BUILD

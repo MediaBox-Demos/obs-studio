@@ -584,6 +584,18 @@ const char *get_simple_output_encoder(const char *encoder)
 	} else if (strcmp(encoder, SIMPLE_ENCODER_APPLE_HEVC) == 0) {
 		return "com.apple.videotoolbox.videoencoder.ave.hevc";
 #endif
+	} else if (strcmp(encoder, SIMPLE_ENCODER_X265) == 0) {
+		return "alirtc_x265";
+	} else if (strcmp(encoder, SIMPLE_ENCODER_S265) == 0) {
+		return "alirtc_x265";
+	} else if (strcmp(encoder, SIMPLE_ENCODER_OPENH264) == 0) {
+		return "alirtc_x265";
+	} else if (strcmp(encoder, SIMPLE_ENCODER_ALIRTC_QSV_H264) == 0) {
+		return "alirtc_qsv";
+	} else if (strcmp(encoder, SIMPLE_ENCODER_ALIRTC_NVIDIA_H264) == 0) {
+		return "alirtc_nvidia";
+	} else if (strcmp(encoder, SIMPLE_ENCODER_ALIRTC_X264) == 0) {
+		return "alirtc_x264";
 	}
 
 	return "obs_x264";
@@ -1127,6 +1139,58 @@ bool SimpleOutput::SetupStreaming(obs_service_t *service)
 			return false;
 		}
 
+		struct obs_output_callback* callbacks = (struct obs_output_callback*)bzalloc(sizeof(struct obs_output_callback))  ;
+		callbacks->on_connect_fail = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_connect_fail();
+			return NULL;
+		};
+		callbacks->on_push_started = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_push_started();
+			return NULL;
+		};
+		callbacks->on_push_stoped = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_push_stoped();
+			return NULL;
+		};
+		callbacks->on_reconnect_start = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_reconnect_start();
+			return NULL;
+		};
+		callbacks->on_reconnect_failed = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_reconnect_failed();
+			return NULL;
+		};
+		callbacks->on_reconnect_sucess = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_reconnect_sucess();
+			return NULL;
+		};
+		callbacks->on_connect_lost = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_connect_lost();
+			return NULL;
+		};
+		callbacks->on_connect_fail = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_connect_fail();
+			return NULL;
+		};
+		callbacks->on_error = [](void *data, int code) -> void * {
+			static_cast<OBSBasic *>(data)->on_error(code);
+			return NULL;
+		};
+		callbacks->on_play_started = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_play_started();
+			return NULL;
+		};
+		callbacks->on_play_stop = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_play_stop();
+			return NULL;
+		};
+		callbacks->on_play_error = [](void *data, int code) -> void * {
+			static_cast<OBSBasic *>(data)->on_play_error(code);
+			return NULL;
+		};
+		callbacks->data = (void *)main;
+		obs_output_set_callback(streamOutput, callbacks);
+
 		streamDelayStarting.Connect(
 			obs_output_get_signal_handler(streamOutput), "starting",
 			OBSStreamStarting, this);
@@ -1168,7 +1232,7 @@ static void clear_archive_encoder(obs_output_t *output,
 	if (clear)
 		obs_output_set_audio_encoder(output, nullptr, 1);
 }
-
+#define SERVICE_PATH "service.json"
 void SimpleOutput::SetupVodTrack(obs_service_t *service)
 {
 	bool advanced =
@@ -1191,6 +1255,36 @@ void SimpleOutput::SetupVodTrack(obs_service_t *service)
 		obs_output_set_audio_encoder(streamOutput, audioArchive, 1);
 	else
 		clear_archive_encoder(streamOutput, SIMPLE_ARCHIVE_NAME);
+}
+
+static OBSData OpenServiceSettings(std::string &type)
+{
+	char serviceJsonPath[512];
+	int ret = GetProfilePath(serviceJsonPath, sizeof(serviceJsonPath),
+				 SERVICE_PATH);
+	if (ret <= 0)
+		return OBSData();
+
+	OBSDataAutoRelease data =
+		obs_data_create_from_json_file_safe(serviceJsonPath, "bak");
+
+	obs_data_set_default_string(data, "type", "rtmp_common");
+	type = obs_data_get_string(data, "type");
+
+	OBSDataAutoRelease settings = obs_data_get_obj(data, "settings");
+
+	return settings.Get();
+}
+#define SERVICE_PATH "service.json"
+static void GetServiceInfo(std::string &type, std::string &service , std::string &server,
+			   std::string &remoteserver, std::string &key)
+{
+	OBSData settings = OpenServiceSettings(type);
+
+	service = obs_data_get_string(settings, "service");
+	server = obs_data_get_string(settings, "server");
+	key = obs_data_get_string(settings, "key");
+	remoteserver = obs_data_get_string(settings, "remoteserver");
 }
 
 bool SimpleOutput::StartStreaming(obs_service_t *service)
@@ -1228,6 +1322,68 @@ bool SimpleOutput::StartStreaming(obs_service_t *service)
 			  enableLowLatencyMode);
 #endif
 	obs_data_set_bool(settings, "dyn_bitrate", enableDynBitrate);
+	obs_data_set_bool(settings, "url", enableDynBitrate);
+
+	std::string serviceType;
+	std::string serviceName;
+	std::string server;
+	std::string remoteserver;
+	std::string key;
+	GetServiceInfo(serviceType, serviceName, server, remoteserver, key);
+	if (serviceType.find("alirtc") != std::string::npos) {
+		obs_data_set_string(settings, "url", server.c_str());
+		obs_data_set_string(settings, "remoteserver", remoteserver.c_str());
+
+		/*
+			视频目标码率，分辨率，帧率，推流编码器类型，音频采样率和音频通道数
+		*/
+		unsigned int cx = (uint32_t)config_get_uint(
+			main->Config(), "Video", "OutputCX");
+		unsigned int cy = (uint32_t)config_get_uint(
+			main->Config(), "Video", "OutputCY");
+		obs_data_set_int(settings, "width", cx);
+		obs_data_set_int(settings, "height", cy);
+
+		const char *encoder = config_get_string(
+		main->Config(), "SimpleOutput", "StreamEncoder");
+		const char *audio_encoder = config_get_string(
+		main->Config(), "SimpleOutput", "StreamAudioEncoder");
+
+		if (strcmp(audio_encoder, "opus") == 0) {
+			obs_data_set_string(settings, "audio_codec_name", "opus");
+		} else {
+			obs_data_set_string(settings, "audio_codec_name",
+					    "aac");
+		}
+
+		obs_data_set_string(settings, "video_codec_name",
+					encoder);
+
+		int audio_bitrate = GetAudioBitrate();
+		int video_bitrate = config_get_uint(
+			main->Config(), "SimpleOutput", "VBitrate");
+
+		obs_data_set_int(settings, "video_bitrate", video_bitrate);
+		obs_data_set_int(settings, "audio_bitrate", audio_bitrate);
+
+		uint32_t fps_num;
+		uint32_t fpx_den;
+		main->GetConfigFPS(fps_num, fpx_den);
+		obs_data_set_int(settings, "fps_num", fps_num);
+		obs_data_set_int(settings, "fps_den", fpx_den);
+
+		uint32_t sampleRate =
+			config_get_uint(main->Config(), "Audio", "SampleRate");
+		const char *speakers = config_get_string(
+			main->Config(), "Audio", "ChannelSetup");
+
+		if (strcmp(speakers, "Mono") == 0) {
+			obs_data_set_int(settings, "audio_channels", 1);
+		} else {
+			obs_data_set_int(settings, "audio_channels", 2);
+		}
+		obs_data_set_int(settings, "audio_sample_rate", sampleRate);
+	}
 	obs_output_update(streamOutput, settings);
 
 	if (!reconnect)
@@ -2166,6 +2322,7 @@ inline void AdvancedOutput::SetupVodTrack(obs_service_t *service)
 		clear_archive_encoder(streamOutput, ADV_ARCHIVE_NAME);
 }
 
+
 bool AdvancedOutput::SetupStreaming(obs_service_t *service)
 {
 	int multiTrackAudioMixes = config_get_int(main->Config(), "AdvOut",
@@ -2210,6 +2367,58 @@ bool AdvancedOutput::SetupStreaming(obs_service_t *service)
 			     type);
 			return false;
 		}
+
+		struct obs_output_callback* callbacks = (struct obs_output_callback*)bzalloc(sizeof(struct obs_output_callback))  ;
+		callbacks->on_connect_fail = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_connect_fail();
+			return NULL;
+		};
+		callbacks->on_push_started = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_push_started();
+			return NULL;
+		};
+		callbacks->on_push_stoped = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_push_stoped();
+			return NULL;
+		};
+		callbacks->on_reconnect_start = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_reconnect_start();
+			return NULL;
+		};
+		callbacks->on_reconnect_failed = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_reconnect_failed();
+			return NULL;
+		};
+		callbacks->on_reconnect_sucess = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_reconnect_sucess();
+			return NULL;
+		};
+		callbacks->on_connect_lost = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_connect_lost();
+			return NULL;
+		};
+		callbacks->on_connect_fail = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_connect_fail();
+			return NULL;
+		};
+		callbacks->on_error = [](void *data, int code) -> void * {
+			static_cast<OBSBasic *>(data)->on_error(code);
+			return NULL;
+		};
+		callbacks->on_play_started = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_play_started();
+			return NULL;
+		};
+		callbacks->on_play_stop = [](void *data) -> void * {
+			static_cast<OBSBasic *>(data)->on_play_stop();
+			return NULL;
+		};
+		callbacks->on_play_error = [](void *data, int code) -> void * {
+			static_cast<OBSBasic *>(data)->on_play_error(code);
+			return NULL;
+		};
+		callbacks->data = main;
+		obs_output_set_callback(streamOutput, callbacks);
 
 		streamDelayStarting.Connect(
 			obs_output_get_signal_handler(streamOutput), "starting",
@@ -2287,6 +2496,70 @@ bool AdvancedOutput::StartStreaming(obs_service_t *service)
 			  enableLowLatencyMode);
 #endif
 	obs_data_set_bool(settings, "dyn_bitrate", enableDynBitrate);
+
+	
+	std::string serviceType;
+	std::string serviceName;
+	std::string server;
+	std::string remoteserver;
+	std::string key;
+	GetServiceInfo(serviceType, serviceName, server, remoteserver, key);
+	if (serviceType.find("alirtc") != std::string::npos) {
+		obs_data_set_string(settings, "url", server.c_str());
+		obs_data_set_string(settings, "remoteserver",
+				    remoteserver.c_str());
+		unsigned int cx = (uint32_t)config_get_uint(
+			main->Config(), "Video", "OutputCX");
+		unsigned int cy = (uint32_t)config_get_uint(
+			main->Config(), "Video", "OutputCY");
+		obs_data_set_int(settings, "width", cx);
+		obs_data_set_int(settings, "height", cy);
+
+		const char *encoder =
+			config_get_string(main->Config(), "AdvOut", "Encoder");
+		const char *audio_encoder = config_get_string(
+			main->Config(), "AdvOut", "AudioEncoder");
+
+		if (strcmp(audio_encoder, "opus") == 0) {
+			obs_data_set_string(settings, "audio_codec_name",
+					    "opus");
+		} else {
+			obs_data_set_string(settings, "audio_codec_name",
+					    "aac");
+		}
+
+		obs_data_set_string(settings, "video_codec_name", encoder);
+
+		int audio_bitrate = GetAudioBitrate(0, audio_encoder);
+		
+		obs_data_t *settings = obs_encoder_get_settings(videoStreaming);
+		int video_bitrate = (int)obs_data_get_int(settings, "bitrate");
+		int keyint_sec = (int)obs_data_get_int(settings, "keyint_sec");
+
+		obs_data_set_int(settings, "keyint_sec", keyint_sec);
+		obs_data_set_int(settings, "video_bitrate", video_bitrate);
+		obs_data_set_int(settings, "audio_bitrate", audio_bitrate);
+
+		uint32_t fps_num;
+		uint32_t fpx_den;
+		main->GetConfigFPS(fps_num, fpx_den);
+		obs_data_set_int(settings, "fps_num", fps_num);
+		obs_data_set_int(settings, "fps_den", fpx_den);
+
+		uint32_t sampleRate =
+			config_get_uint(main->Config(), "Audio", "SampleRate");
+		const char *speakers = config_get_string(
+			main->Config(), "Audio", "ChannelSetup");
+
+		if (strcmp(speakers, "Mono") == 0) {
+			obs_data_set_int(settings, "audio_channels", 1);
+		} else {
+			obs_data_set_int(settings, "audio_channels", 2);
+		}
+		obs_data_set_int(settings, "audio_sample_rate", sampleRate);
+		
+	}
+
 	obs_output_update(streamOutput, settings);
 
 	if (!reconnect)

@@ -411,6 +411,7 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	HookWidget(ui->service,              COMBO_CHANGED,  STREAM1_CHANGED);
 	HookWidget(ui->server,               COMBO_CHANGED,  STREAM1_CHANGED);
 	HookWidget(ui->customServer,         EDIT_CHANGED,   STREAM1_CHANGED);
+	HookWidget(ui->customRemoteServer,   EDIT_CHANGED,   STREAM1_CHANGED);
 	HookWidget(ui->key,                  EDIT_CHANGED,   STREAM1_CHANGED);
 	HookWidget(ui->bandwidthTestEnable,  CHECK_CHANGED,  STREAM1_CHANGED);
 	HookWidget(ui->twitchAddonDropdown,  COMBO_CHANGED,  STREAM1_CHANGED);
@@ -754,6 +755,8 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	if (obs_audio_monitoring_available())
 		FillAudioMonitoringDevices();
 
+	connect(ui->sampleRate, &QComboBox::currentIndexChanged, this,
+		&OBSBasicSettings::SampleRateWarning);
 	connect(ui->channelSetup, &QComboBox::currentIndexChanged, this,
 		&OBSBasicSettings::SurroundWarning);
 	connect(ui->channelSetup, &QComboBox::currentIndexChanged, this,
@@ -2784,7 +2787,15 @@ void OBSBasicSettings::LoadAudioSettings()
 
 void OBSBasicSettings::UpdateColorFormatSpaceWarning()
 {
+	
 	const QString format = ui->colorFormat->currentData().toString();
+	if (IsALIRTC() && format != "I420") {
+		OBSMessageBox::information(
+		this, QTStr("Basic.Settings.General.AlirtcSupI420"),
+		QTStr("Basic.Settings.General.AlirtcSupI420.Message"));
+		SetComboByValue(ui->colorFormat, "I420");
+		return ;
+	}
 	switch (ui->colorSpace->currentIndex()) {
 	case 3: /* Rec.2100 (PQ) */
 	case 4: /* Rec.2100 (HLG) */
@@ -3766,11 +3777,11 @@ void OBSBasicSettings::SaveOutputSettings()
 	QString encoder = ui->simpleOutStrEncoder->currentData().toString();
 	const char *presetType;
 
-	if (encoder == SIMPLE_ENCODER_QSV)
+	if (encoder == SIMPLE_ENCODER_QSV || encoder == SIMPLE_ENCODER_ALIRTC_QSV_H264)
 		presetType = "QSVPreset";
 	else if (encoder == SIMPLE_ENCODER_QSV_AV1)
 		presetType = "QSVPreset";
-	else if (encoder == SIMPLE_ENCODER_NVENC)
+	else if (encoder == SIMPLE_ENCODER_NVENC || encoder == SIMPLE_ENCODER_ALIRTC_NVIDIA_H264)
 		presetType = "NVENCPreset2";
 	else if (encoder == SIMPLE_ENCODER_NVENC_AV1)
 		presetType = "NVENCPreset2";
@@ -4371,8 +4382,10 @@ void OBSBasicSettings::on_advOutEncoder_currentIndexChanged()
 		ui->advOutEncoderLayout->addWidget(streamEncoderProps);
 	}
 
-	ui->advOutUseRescale->setVisible(true);
-	ui->advOutRescale->setVisible(true);
+	if(!IsALIRTC()) {
+		ui->advOutUseRescale->setVisible(true);
+		ui->advOutRescale->setVisible(true);
+	}
 }
 
 void OBSBasicSettings::on_advOutRecEncoder_currentIndexChanged(int idx)
@@ -5266,7 +5279,9 @@ void OBSBasicSettings::FillSimpleRecordingValues()
 		QString(str));
 #define ENCODER_STR(str) QTStr("Basic.Settings.Output.Simple.Encoder." str)
 
-	ADD_QUALITY("Stream");
+	if(!IsALIRTC()) {
+		ADD_QUALITY("Stream");
+	}
 	ADD_QUALITY("Small");
 	ADD_QUALITY("HQ");
 	ADD_QUALITY("Lossless");
@@ -5385,13 +5400,27 @@ void OBSBasicSettings::SimpleStreamingEncoderChanged()
 	QString preset;
 	const char *defaultPreset = nullptr;
 
-	ui->simpleOutAdvanced->setVisible(true);
-	ui->simpleOutPresetLabel->setVisible(true);
-	ui->simpleOutPreset->setVisible(true);
 	ui->simpleOutPreset->clear();
 
+	if (encoder == SIMPLE_ENCODER_ALIRTC_QSV_H264 ||
+		encoder == SIMPLE_ENCODER_ALIRTC_NVIDIA_H264 ||
+		encoder == SIMPLE_ENCODER_ALIRTC_X264 ||
+		encoder == SIMPLE_ENCODER_X265 ||		
+		encoder == SIMPLE_ENCODER_S265 ||
+		encoder == SIMPLE_ENCODER_OPENH264
+	) {
+		ui->simpleOutPresetLabel->setVisible(false);
+		ui->simpleOutPreset->setVisible(false);
+		ui->simpleOutAdvanced->setVisible(false);
+	} else {
+		ui->simpleOutPresetLabel->setVisible(true);
+		ui->simpleOutPreset->setVisible(true);
+		ui->simpleOutAdvanced->setVisible(true);
+	}
+
 	if (encoder == SIMPLE_ENCODER_QSV ||
-	    encoder == SIMPLE_ENCODER_QSV_AV1) {
+	    encoder == SIMPLE_ENCODER_QSV_AV1
+		) {
 		ui->simpleOutPreset->addItem("speed", "speed");
 		ui->simpleOutPreset->addItem("balanced", "balanced");
 		ui->simpleOutPreset->addItem("quality", "quality");
@@ -5905,18 +5934,36 @@ void OBSBasicSettings::SimpleRecordingEncoderChanged()
 	ui->simpleOutInfoLayout->addWidget(simpleOutRecWarning);
 }
 
+void OBSBasicSettings::SampleRateWarning(int idx) {
+	if (IsALIRTC() && idx != 1) {
+		OBSMessageBox::information(
+		this, QTStr("Basic.Settings.General.AlirtcSup48K"),
+		QTStr("Basic.Settings.General.AlirtcSup48K.Message"));
+		ui->sampleRate->setCurrentIndex(sampleRateIndex);
+		return ;
+	}
+}
+
 void OBSBasicSettings::SurroundWarning(int idx)
 {
 	if (idx == lastChannelSetupIdx || idx == -1)
 		return;
 
+	QString speakerLayoutQstr = ui->channelSetup->itemText(idx);
+	bool surround = IsSurround(QT_TO_UTF8(speakerLayoutQstr));
+
+	if (IsALIRTC() && surround) {
+		OBSMessageBox::information(
+		this, QTStr("Basic.Settings.General.AlirtcNotSupSround"),
+		QTStr("Basic.Settings.General.AlirtcNotSupSround.Message"));
+		ui->channelSetup->setCurrentIndex(lastChannelSetupIdx);
+		return ;
+	}
+
 	if (loading) {
 		lastChannelSetupIdx = idx;
 		return;
 	}
-
-	QString speakerLayoutQstr = ui->channelSetup->itemText(idx);
-	bool surround = IsSurround(QT_TO_UTF8(speakerLayoutQstr));
 
 	QString lastQstr = ui->channelSetup->itemText(lastChannelSetupIdx);
 	bool wasSurround = IsSurround(QT_TO_UTF8(lastQstr));

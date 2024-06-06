@@ -95,6 +95,8 @@ file(GLOB X264_BIN_FILES "${X264_INCLUDE_DIR}/../bin${_bin_suffix}/libx264-*.dll
      "${X264_INCLUDE_DIR}/../bin/libx264-*.dll" "${X264_INCLUDE_DIR}/bin/libx264-*.dll"
      "${X264_INCLUDE_DIR}/bin${_bin_suffix}/libx264-*.dll")
 
+file(GLOB ALIRTC_BIN_FILES "${ALIRTC_LIBRARY}/*.dll")
+
 file(
   GLOB
   FREETYPE_BIN_FILES
@@ -212,6 +214,7 @@ file(GLOB QT_ICU_BIN_FILES "${QtCore_BIN_DIR}/icu*.dll")
 set(ALL_BASE_BIN_FILES
     ${FFMPEG_BIN_FILES}
     ${X264_BIN_FILES}
+    ${ALIRTC_BIN_FILES}
     ${CURL_BIN_FILES}
     ${LUA_BIN_FILES}
     ${SSL_BIN_FILES}
@@ -265,6 +268,7 @@ endforeach()
 
 obs_status(STATUS "FFmpeg files: ${FFMPEG_BIN_FILES}")
 obs_status(STATUS "x264 files: ${X264_BIN_FILES}")
+obs_status(STATUS "alirtc files: ${ALIRTC_BIN_FILES}")
 obs_status(STATUS "Libfdk files: ${LIBFDK_BIN_FILES}")
 obs_status(STATUS "Freetype files: ${FREETYPE_BIN_FILES}")
 obs_status(STATUS "rnnoise files: ${RNNOISE_BIN_FILES}")

@@ -2231,6 +2231,10 @@ EXPORT void obs_output_set_reconnect_settings(obs_output_t *output,
 					      int retry_count, int retry_sec);
 
 EXPORT uint64_t obs_output_get_total_bytes(const obs_output_t *output);
+
+EXPORT void obs_output_set_callback(const obs_output_t *output, struct obs_output_callback* callback);
+EXPORT void obs_output_start_play_remote_url(const obs_output_t *output, const char * url, void * hwnd, int width, int height);
+EXPORT void obs_output_stop_play_remote_url(const obs_output_t *output);
 EXPORT int obs_output_get_frames_dropped(const obs_output_t *output);
 EXPORT int obs_output_get_total_frames(const obs_output_t *output);
 
