@@ -10,6 +10,7 @@
 
 struct obs_encoder_info openh264_encoder_info;
 struct obs_encoder_info x264_encoder_info;
+struct obs_encoder_info s264_encoder_info;
 struct obs_encoder_info qsv_encoder_info;
 struct obs_encoder_info nvidia_encoder_info;
 struct obs_encoder_info x265_encoder_info;
@@ -86,6 +87,12 @@ static const char *alirtc_s265_getname(void *type_data)
 	return "AliRtc s265";
 }
 
+static const char *alirtc_s264_getname(void *type_data)
+{
+	UNUSED_PARAMETER(type_data);
+	return "AliRtc s264";
+}
+
 static void *obs_alirtc_encoder_create(AlivcVideoCodecManufacturer codec_type, obs_data_t *settings,
 			    obs_encoder_t *encoder) {
 	blog(LOG_INFO, "obs_alirtc_encoder_create codec_type %d ", codec_type);
@@ -132,6 +139,11 @@ static void *alirtc_x265_enc_create(obs_data_t *settings, obs_encoder_t *encoder
 static void *alirtc_s265_enc_create(obs_data_t *settings, obs_encoder_t *encoder)
 {
 	return obs_alirtc_encoder_create(AlivcVideoCodecManufacturerS265, settings, encoder);
+}
+
+static void *alirtc_s264_enc_create(obs_data_t *settings, obs_encoder_t *encoder)
+{
+	return obs_alirtc_encoder_create(AlivcVideoCodecManufacturerS264, settings, encoder);
 }
 
 static void *alirtc_opus_enc_create(obs_data_t *settings, obs_encoder_t *encoder)
@@ -299,6 +311,21 @@ static bool alirtc_x265_enc_update(void *data, obs_data_t *settings)
 static bool alirtc_s265_enc_update(void *data, obs_data_t *settings)
 {
 	blog(LOG_INFO, "alirtc_s265_enc_update ");
+	// struct obs_qsv *obsqsv = data;
+	// obsqsv->params.nTargetBitRate =
+	// 	(mfxU16)obs_data_get_int(settings, "bitrate");
+
+	// if (!qsv_encoder_reconfig(obsqsv->context, &obsqsv->params)) {
+	// 	warn("Failed to reconfigure");
+	// 	return false;
+	// }
+
+	return true;
+}
+
+static bool alirtc_s264_enc_update(void *data, obs_data_t *settings)
+{
+	blog(LOG_INFO, "alirtc_s264_enc_update ");
 	// struct obs_qsv *obsqsv = data;
 	// obsqsv->params.nTargetBitRate =
 	// 	(mfxU16)obs_data_get_int(settings, "bitrate");
@@ -579,6 +606,25 @@ static void  register_alirtc_s265_encoder() {
 	obs_register_encoder(&s265_encoder_info);
 };
 
+static void  register_alirtc_s264_encoder() {
+	memset(&s264_encoder_info, 0, sizeof(s264_encoder_info));
+	s264_encoder_info.id = "alirtc_s264";
+	s264_encoder_info.type = OBS_ENCODER_VIDEO;
+	s264_encoder_info.codec = "h264";
+	s264_encoder_info.get_name = alirtc_s264_getname;	
+	s264_encoder_info.create = alirtc_s264_enc_create;	
+	s264_encoder_info.destroy = alirtc_enc_destroy;	
+	s264_encoder_info.encode = alirtc_enc_encode;
+	s264_encoder_info.get_frame_size = alirtc_enc_frame_size;
+	s264_encoder_info.get_defaults = alirtc_enc_defaults;
+	s264_encoder_info.get_properties = alirtc_enc_properties;
+	s264_encoder_info.get_extra_data = alirtc_enc_extra_data;
+	s264_encoder_info.get_video_info = alirtc_video_info;
+	s264_encoder_info.update = alirtc_s265_enc_update;
+	s264_encoder_info.get_sei_data = alirtc_enc_sei;
+	obs_register_encoder(&s264_encoder_info);
+};
+
 static void  register_alirtc_opus_encoder() {
 	memset(&opus_encoder_info, 0, sizeof(opus_encoder_info));
 	opus_encoder_info.id = "alirtc_opus";
@@ -633,6 +679,8 @@ void register_alirtc_encoder() {
 				register_alirtc_nv_encoder();
 			} else if (codecManufacturerList.codecType[i] == AlivcVideoCodecManufacturerS265) {
 				register_alirtc_s265_encoder();
+			} else if (codecManufacturerList.codecType[i] == AlivcVideoCodecManufacturerS264) {
+				register_alirtc_s264_encoder();
 			}
 			obs_alirtc_destory_instace();    
 		}

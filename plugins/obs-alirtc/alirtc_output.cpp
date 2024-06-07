@@ -261,6 +261,9 @@ bool AlirtcOutput::Start() {
 	} else if (video_encoder_name_.find("qsv") != std::string::npos) {
 		pusher_->setVideoEncoderCodecManufacturerConfig(
 			AlivcVideoCodecManufacturerQsvIntel);
+	}  else if (video_encoder_name_.find("s264") != std::string::npos) {
+		pusher_->setVideoEncoderCodecManufacturerConfig(
+			AlivcVideoCodecManufacturerS264);
 	} else {
 		pusher_->setVideoEncoderCodecManufacturerConfig(
 			AlivcVideoCodecManufacturerX264);
