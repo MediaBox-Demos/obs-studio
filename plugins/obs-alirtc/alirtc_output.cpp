@@ -229,7 +229,7 @@ void AlirtcOutput::CreatePusher() {
 	pusher_->setExternalVideoSource( true, AlivcLiveVideoTrackCamera);
 	pusher_->setExternalAudioSource(true, audio_sample_rate_,
 					audio_channel_);
-
+	pusher_->setParameter("{\"audio\":{\"user_specified_audio_external_buf_size\":6}}");
 
 	video_buffer_length_ = static_cast<size_t>(config_.height) * config_.width * 3 / 2;
 	video_buffer_ = (uint8_t *)bzalloc(video_buffer_length_);
@@ -375,7 +375,7 @@ void AlirtcOutput::Update(obs_data_t *settings) {
 	}
 
 	if (obs_data_get_string(settings, "audio_codec_name") != "") {
-		video_encoder_name_ =
+		audio_encoder_name_ =
 			obs_data_get_string(settings, "audio_codec_name");
 	}
 
@@ -388,8 +388,14 @@ void AlirtcOutput::InsertVideoFrame(struct video_data *frame) {
 		int width = (int)obs_output_get_width(output_);
 		int length = width * height * 3 / 2;
 		if (length != video_buffer_length_) {
-			bfree(video_buffer_);
+			if (video_buffer_) {
+				bfree(video_buffer_);
+			}
+
 			video_buffer_ = (uint8_t *)bzalloc(length);
+			if (!video_buffer_) {
+				return ;
+			}
 			video_buffer_length_ = length;
 		}
 

@@ -1349,7 +1349,7 @@ bool SimpleOutput::StartStreaming(obs_service_t *service)
 		const char *audio_encoder = config_get_string(
 		main->Config(), "SimpleOutput", "StreamAudioEncoder");
 
-		if (strcmp(audio_encoder, "opus") == 0) {
+		if (strstr(audio_encoder, "opus") != NULL) {
 			obs_data_set_string(settings, "audio_codec_name", "opus");
 		} else {
 			obs_data_set_string(settings, "audio_codec_name",
@@ -2520,7 +2520,7 @@ bool AdvancedOutput::StartStreaming(obs_service_t *service)
 		const char *audio_encoder = config_get_string(
 			main->Config(), "AdvOut", "AudioEncoder");
 
-		if (strcmp(audio_encoder, "opus") == 0) {
+		if (strstr(audio_encoder, "opus") != NULL) {
 			obs_data_set_string(settings, "audio_codec_name",
 					    "opus");
 		} else {
