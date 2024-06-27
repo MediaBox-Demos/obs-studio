@@ -104,6 +104,7 @@ private:
 	int video_bitrate_{1500};
 	int fps_num_{0};
 	std::string video_encoder_name_;	
+	bool isH264{true};
 	std::string audio_encoder_name_;
 	int width_{720};	
 	int height_{1280};
@@ -183,6 +184,7 @@ void AlirtcOutput::GetPusherConfig() {
 	config_.audioProfile = AlivcLiveStereoHighQualityMode;
 	config_.height = height_;
 	config_.width = width_;
+	config_.videoEncoderCodecType = isH264?AlivcLiveVideoFormat::AlivcLiveVideoFormatH264:AlivcLiveVideoFormat::AlivcLiveVideoFormatH265;
 	if (config_.height > config_.width) {
 		config_.mPreviewOrientation =
 			AlivcLivePreviewOrientationPortRait;
@@ -243,8 +245,7 @@ bool AlirtcOutput::Start() {
 	do_log(LOG_INFO, "AlirtcOutput Start");
 	std::lock_guard<std::mutex> l(start_stop_mutex);
 
-	CreatePusher();
-	do_log(LOG_INFO, "AlirtcOutput Start url %s", url_.c_str());
+	AlivcVideoCodecManufacturer codec_manufacturer;
 
 	if (video_encoder_name_.find("x264") != std::string::npos) {
 		pusher_->setVideoEncoderCodecManufacturerConfig(
@@ -252,9 +253,11 @@ bool AlirtcOutput::Start() {
 	} else if (video_encoder_name_.find("x265") != std::string::npos) {
 		pusher_->setVideoEncoderCodecManufacturerConfig(
 			AlivcVideoCodecManufacturerX265);
+		isH264 = false;
 	} else if (video_encoder_name_.find("s265") != std::string::npos) {
 		pusher_->setVideoEncoderCodecManufacturerConfig(
 			AlivcVideoCodecManufacturerS265);
+		isH264 = false;
 	} else if (video_encoder_name_.find("nvidia") != std::string::npos) {
 		pusher_->setVideoEncoderCodecManufacturerConfig(
 			AlivcVideoCodecManufacturerNvidia);
@@ -268,6 +271,10 @@ bool AlirtcOutput::Start() {
 		pusher_->setVideoEncoderCodecManufacturerConfig(
 			AlivcVideoCodecManufacturerX264);
 	}
+
+	CreatePusher();
+	do_log(LOG_INFO, "AlirtcOutput Start url %s", url_.c_str());
+	pusher_->setVideoEncoderCodecManufacturerConfig(codec_manufacturer);
 	pusher_->startPush(url_.c_str());
 
 	StartObsCapture();
