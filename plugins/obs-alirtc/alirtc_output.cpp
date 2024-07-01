@@ -248,28 +248,21 @@ bool AlirtcOutput::Start() {
 	AlivcVideoCodecManufacturer codec_manufacturer;
 
 	if (video_encoder_name_.find("x264") != std::string::npos) {
-		pusher_->setVideoEncoderCodecManufacturerConfig(
-			AlivcVideoCodecManufacturerX264);
+		codec_manufacturer = AlivcVideoCodecManufacturerX264;
 	} else if (video_encoder_name_.find("x265") != std::string::npos) {
-		pusher_->setVideoEncoderCodecManufacturerConfig(
-			AlivcVideoCodecManufacturerX265);
 		isH264 = false;
+		codec_manufacturer = AlivcVideoCodecManufacturerX265;
 	} else if (video_encoder_name_.find("s265") != std::string::npos) {
-		pusher_->setVideoEncoderCodecManufacturerConfig(
-			AlivcVideoCodecManufacturerS265);
+		codec_manufacturer = AlivcVideoCodecManufacturerS265;
 		isH264 = false;
 	} else if (video_encoder_name_.find("nvidia") != std::string::npos) {
-		pusher_->setVideoEncoderCodecManufacturerConfig(
-			AlivcVideoCodecManufacturerNvidia);
+		codec_manufacturer = AlivcVideoCodecManufacturerNvidia;
 	} else if (video_encoder_name_.find("qsv") != std::string::npos) {
-		pusher_->setVideoEncoderCodecManufacturerConfig(
-			AlivcVideoCodecManufacturerQsvIntel);
+		codec_manufacturer = AlivcVideoCodecManufacturerQsvIntel;
 	}  else if (video_encoder_name_.find("s264") != std::string::npos) {
-		pusher_->setVideoEncoderCodecManufacturerConfig(
-			AlivcVideoCodecManufacturerS264);
+		codec_manufacturer = AlivcVideoCodecManufacturerS264;
 	} else {
-		pusher_->setVideoEncoderCodecManufacturerConfig(
-			AlivcVideoCodecManufacturerX264);
+		codec_manufacturer = AlivcVideoCodecManufacturerX264;
 	}
 
 	CreatePusher();
@@ -320,6 +313,7 @@ int AlirtcOutput::StartPlay(const char *url, void *hwnd, int width, int height) 
 		player_->setupWithConfig(config);
 		player_->startPlay(url);
 		player_->setPlayView(hwnd, width, height);
+		player_->setPlayInfoListener(this);
 	}
 	return 0;
 }

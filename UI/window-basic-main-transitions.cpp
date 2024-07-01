@@ -1030,6 +1030,10 @@ void OBSBasic::on_PKmodeSwitch_clicked() {
 
 void OBSBasic::callbackMsg(const QString &title, const QString &text) {
 	OBSMessageBox::information(this, title, text);
+
+	if (text.toStdString().find("on_play_stop") != std::string::npos) {
+		on_PKmodeSwitch_clicked();		
+	}
 }
 
 
@@ -1114,7 +1118,7 @@ void OBSBasic::on_play_error(int code) {
 		this, "callbackMsg", Qt::QueuedConnection,
 		Q_ARG(QString, format_callback_str_title()),
 		Q_ARG(QString,
-		      format_callback_str("on_play_stop", code_s.c_str())));
+		      format_callback_str("on_play_stop", code_s.c_str())));  
 }
 
 static inline void ResetQuickTransitionText(QuickTransition *qt)
