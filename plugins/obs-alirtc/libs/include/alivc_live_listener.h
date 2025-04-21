@@ -250,6 +250,18 @@ namespace AliVCSDK_ARTC
     } AlivcLiveNetworkQuality;
 
     /**
+     * @brief 视频数据输出位置
+     */
+    typedef enum {
+      /** 采集视频数据，对应输出回调 OnCaptureVideoSample */
+      AlivcLivePositionPostCapture = 1 << 0,
+      /** 渲染视频数据，对应输出回调 OnRemoteVideoSample */
+      AlivcLivePositionPreRender = 1 << 1,
+      /** 编码前视频数据，对应输出回调 OnPreEncodeVideoSample */
+      AlivcLivePositionPreEncoder = 1 << 2,
+    } AlivcLiveVideoObserPosition;
+
+    /**
      * @brief 网络连接状态
      */
     typedef enum {
@@ -755,6 +767,18 @@ namespace AliVCSDK_ARTC
         virtual void onPushStopped(AlivcLivePusher* pusher){};
 
         /**
+         * @brief  暂停开始回调
+         * @param pusher AlivcLivePusher实例
+         */
+        virtual void onPushPaused(AlivcLivePusher* pusher){};
+
+         /**
+         * @brief 恢复结束回调
+         * @param pusher AlivcLivePusher实例
+         */
+        virtual void onPushResume(AlivcLivePusher* pusher){};
+        
+        /**
          * @brief 首帧发送回调
          * @param pusher AlivcLivePusher实例
          */
@@ -999,6 +1023,24 @@ namespace AliVCSDK_ARTC
          * - false: 不需要写回SDK
          */
         virtual bool onRemoteVideoSample(AlivcLivePlayer* player, AlivcLiveVideoSource videoSource, AlivcLiveVideoRawData &videoRawData) = 0;
+
+        /**
+         * @brief 订阅的本地编码前视频数据回调
+         * @param livePusher AlivcLivePusher实例
+         * @param videoSource 视频数据源
+         * @param videoRawData 视频裸数据
+         * @return
+         * - true: 需要写回SDK（只对I420）
+         * - false: 不需要写回SDK
+         */
+        virtual bool onPreEncodeVideoSample(AlivcLivePusher* livePusher, AlivcLiveVideoSource videoSource, AlivcLiveVideoRawData &videoRawData) = 0;
+          
+        /**
+         * @brief 视频数据输出内容
+         * @return 期望视频输出内容，参考 {@link AliEngineVideoObserPosition}
+         */
+        virtual uint32_t getObservedFramePosition() { return static_cast<uint32_t>(AlivcLivePositionPostCapture | AlivcLivePositionPreRender); };
+
     };
 
     /**
@@ -1085,6 +1127,7 @@ namespace AliVCSDK_ARTC
          */
         virtual bool onRemoteUserAudioFrame(AlivcLivePlayer* player, AlivcLiveAudioRawData audioRawData) = 0; 
     };
+
 
     /**
      * @addtogroup AlivcLiveCallback 回调及监听

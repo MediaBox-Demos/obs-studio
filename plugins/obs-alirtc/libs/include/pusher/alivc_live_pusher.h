@@ -78,6 +78,17 @@ namespace AliVCSDK_ARTC
         AlivcLiveMuteLocalAudioModeMuteOnlyMic,
     } AlivcLiveMuteLocalAudioMode;
 
+	/**
+     * @brief 采集偏好
+     */
+    typedef enum {
+        AlivcLiveCaptureOutputPreferenceAuto = 0,
+        /** 根据设置的publsh profile 分辨率和帧率，选择最接近的摄像头输出参数 */
+        AlivcLiveCaptureOutputPreferencePerformance = 1,
+        /** 选择较高的摄像头输出参数 */
+        AlivcLiveCaptureOutputPreferencePreview = 2,
+    } AlivcLiveCaptureOutputPreference;
+
     enum AlivcLiveResolutionEnum {
         /**
          * 180P
@@ -179,6 +190,22 @@ namespace AliVCSDK_ARTC
 
         AlivcLivePreviewOrientationLandscape = 1,
     };
+
+    typedef enum {
+        AlivcLiveCapturePipelineSaleModePre = 0,
+        AlivcLiveCapturePipelineSaleModePost = 1,
+    } AlivcLiveCapturePipelineScaleMode;
+
+    typedef enum  {
+        /** 预览和编码均关闭镜像 */
+        AlivcLiveVideoPipelineMirrorModeNoMirror = 0,
+        /** 预览和编码均打开镜像 */
+        AlivcLiveVideoPipelineMirrorModeBothMirror = 1,
+        /** 仅预览打开镜像 */
+        AlivcLiveVideoPipelineMirrorModeOnlyPreviewMirror = 2,
+        /** 仅推流打开镜像 */
+        AlivcLiveVideoPipelineMirrorModeOnlyPublishMirror = 3,
+    } AlivcLiveVideoPipelineMirrorMode;
     /**
      * @brief 音频场景模式
      */
@@ -231,6 +258,18 @@ namespace AliVCSDK_ARTC
       AlivcLiveStereoSuperHighQualityMode = 0x0013,   
     }AlivcLiveAudioProfile;
 
+	/**
+    * @brief 音频编码模式
+    */
+   typedef enum {
+	/* 不设置 */
+	AlivcLiveVideoRenderDowngradeMinNone = 0,
+	/* 最小可以降级至GDI */
+	AlivcLiveVideoRenderDowngradeMinGDI = 1,
+	/* 最小可以降级至D3D9 */
+	AlivcLiveVideoRenderDowngradeMinD3D9 = 2,
+   }AlivcLiveVideoRenderDowngradeMinVersion;
+
 
 #define MAX_ALIVC_VIDEO_CODEC_MANUFACTURER_COUNT		( 32 )
 	typedef struct AlivcVideoCodecrManufacturerList {
@@ -244,13 +283,22 @@ namespace AliVCSDK_ARTC
     typedef struct AlivcLiveScreenSourcInfo {
         int sourceId;
         String sourceName;
+        bool isSelf;
     } AlivcLiveScreenSourcInfo;
+
+    typedef enum {
+        /** 桌面分享 */
+        AlivcLiveScreenShareDesktop,
+        /** 窗口分享 */
+        AlivcLiveScreenShareWindow,
+    } AlivcLiveScreenShareType;
 
 	typedef enum  {
 		/* default use opus!   */
 		AlivcAudioCodecOpus = 0,
 	    AlivcAudioCodecAAC = 1 ,
 	} AlivcAudioCodecEncodeType;
+
 
     /**
      * @brief 屏幕分享源列表
@@ -300,6 +348,8 @@ namespace AliVCSDK_ARTC
          */
         int width{0};
         int height{0};
+
+		AlivcLiveRenderMode renderMode{AlivcLiveRenderMode::AlivcLiveRenderModeAuto};
         
         /** 视频帧率，默认值15, 最大值30，默认配置给摄像头
         */
@@ -319,7 +369,7 @@ namespace AliVCSDK_ARTC
         /* 开启变分辨率
          */
         bool enableAutoResolution{false};
-        /* 暂定推流时推图片对应路径 TODO:待对接
+        /* 暂停推流时推图片对应路径
          */
         String mPausePushImagePath;
         /* 网络不佳时推图片对应路径 TODO:待对接
@@ -335,7 +385,11 @@ namespace AliVCSDK_ARTC
 		推流音质模式
 		*/
 		AlivcLiveAudioProfile audioProfile {AlivcLiveAudioProfile::AlivcLiveHighQualityMode};
-
+        
+        /*
+           开启采集回调未处理的原始数据
+        */
+        bool enableCaptureObserverOrignal{false};
 		/*
 		HEVC 编码B帧，仅在开启H265编码时生效
 		*/
@@ -345,7 +399,12 @@ namespace AliVCSDK_ARTC
 
 		/* 开启MPU旁路功能，默认打开 */
 		bool enableStartMpu{true};
-
+		/* 开启视频回调降低分辨率 */
+		bool enable_obsever_frame_low_resolution {false};
+		/*
+		推流音质模式
+		*/
+		AlivcLiveVideoRenderDowngradeMinVersion videoRenderMin {AlivcLiveVideoRenderDowngradeMinVersion::AlivcLiveVideoRenderDowngradeMinNone};
     }AlivcLivePushConfig;
 
     /**
@@ -448,6 +507,13 @@ namespace AliVCSDK_ARTC
          混流类型
          */
         AlivcLiveMixStreamType mixType ;
+
+		/**
+		 * 背景图片url
+		 * 如果不为空，则在主播不推流时显示背景图片
+		 */
+		String imageUrl;
+
     };
     
     /**
@@ -667,6 +733,22 @@ namespace AliVCSDK_ARTC
         AlivcLiveAudioChannelEnum channels = AlivcLiveAudioChannelOne;
     } AlivcLiveAudioFrameListenerConfig;
 
+	/**
+	 * @brief 外部音频流配置
+	 */
+	typedef struct AlivcLiveExternalAudioStreamConfig {
+		/** 声道数，默认值：1 */
+		int channels = 1;
+		/** 采样率，默认值：48000 */
+		int sampleRate = 48000;
+		/** 播放音量，取值范围[0-100]，默认值：50 */
+		int playoutVolume = 50;
+		/** 推流音量，取值范围[0-100]，默认值：50 */
+		int publishVolume = 50;
+		/** 1-作为Dual音频流推流，0-作为MIC音频流推流 */
+		int publishStream = 0;
+	} AlivcLiveExternalAudioStreamConfig;
+
     /**
     * @brief 直播连麦的推流控制类
     */
@@ -692,6 +774,24 @@ namespace AliVCSDK_ARTC
 		 * @note 为避免死锁，不建议在任何SDK的回调中调用本方法
 		 */
 		static void destroy();
+
+		/**
+         * @brief 设置H5兼容模式
+         * @details 是否需要与Web SDK互通。如果使用Native SDK用户加入频道，需要与通过Web SDK加入频道的用户进行互通，则必须使用H5兼容模式,否则，Web用户查看Native用户将是黑屏。
+         * @param comp 
+         * - true: 兼容H5。
+         * - false: 传统模式，不兼容H5。
+         * @note 不支持在创建AliEngine实例之后更改H5兼容模式，必须在创建实例之前就调用此方法。
+         */
+        static void setH5CompatibleMode(bool comp);
+        
+        /**
+         * @brief 检查当前是否兼容H5、与Web SDK互通
+         * @return 
+         * - true: 兼容H5。
+         * - false: 不兼容H5。
+         */
+        static bool getH5CompatibleMode();
 
 		/**
 		 * @brief 开启本地视频预览, Async为异步方法
@@ -720,7 +820,18 @@ namespace AliVCSDK_ARTC
 		 */
 		virtual int startPush(const char* url) = 0;
 		virtual int startPushAsync(const char* url) = 0;
-
+        
+        /**
+         * 暂停推流
+         *
+         */
+        virtual int pause() = 0;
+        
+        /**
+         * 恢复推流
+         *
+         */
+        virtual int resume() = 0;
 		/**
 		 * @brief  停止推流;(异步)
 		 * @return
@@ -973,6 +1084,21 @@ namespace AliVCSDK_ARTC
 		virtual int setCurrentCameraID(const char* cameraID) = 0;
 
 		/**
+         * @brief 设置摄像头采集偏好
+         * @param preference 采集偏好
+         *   - {@link AlivcLiveCaptureOutputPreference::AlivcLiveCaptureOutputPreferencePreview} 高清预览，采集优先保证视频预览质量
+         *   - {@link AlivcLiveCaptureOutputPreference::AlivcLiveCaptureOutputPreferencePerformance} 采集选择最接近推流的分辨率，优先保证设备性能
+         *   - {@link AlivcLiveCaptureOutputPreference::AlivcLiveCaptureOutputPreferenceAuto} 自动调整采集分辨率
+         * 
+         * @return
+         * - 0: 成功
+         * - 非0: 失败
+         * @note 必须在打开摄像头之前设置，如 {@link StartPreview}，{@link StartPush}之前设置
+         */
+
+		virtual int setCameraCapturerConfiguration(AlivcLiveCaptureOutputPreference preference) = 0;
+
+		/**
 		* @brief 获取支持的分辨率
 		* @param source 前后置摄像头 win/mac忽略
 		* @return
@@ -1004,7 +1130,7 @@ namespace AliVCSDK_ARTC
 		virtual int setLivePushNetworkListener(AlivcLivePushNetworkListener* networkListener) = 0;
 
 		/**
-		 * 设置视频帧通知事件
+		 * 设置视频帧通知事件,初始化之後生效
 		 *
 		 * @param videoFrameListener 通知监听器
 		 */
@@ -1090,6 +1216,28 @@ namespace AliVCSDK_ARTC
          * @param previewOrientation 横屏/竖屏
          */
         virtual int setOrientation(AlivcLivePreviewOrientationEnum previewOrientation) = 0;
+
+		/**
+		*@brief 设置采集缩放时机，视频数据是采集的时候立即缩放还是编码时才进行缩放。
+		*@param mode 控制采集缩放时机的模式，默认是采集的时候立即缩放
+		*@note 必须在打开摄像头之前设置，如 {@link AliRtcEngine::startPreview}，{@link AliRtcEngine::joinChannel:name:onResult:} / {@link AliRtcEngine::joinChannel:name:onResultWithUserId:}之前设置
+		*/
+		virtual void setCapturePipelineScaleMode(const AlivcLiveCapturePipelineScaleMode mode) = 0;
+		/**
+		* @brief 设置预览和推流镜像能力
+		* @param mirrorMode 设置镜像的模式
+		* @return
+		* - 0: 设置成功
+		* - <0: 设置失败
+		*  - AliRtcErrInner: SDK内部状态错误，需检查是否创建SDK实例成功
+		*
+		* @note
+		* - 此接口在入会前和入会后均可以动态设置，SDK内部会记录状态，并在可以操作预览及编码的时候对视频进行操作；
+		* - 使用此接口的优先级会高于setLocalViewConfig&setVideoEncoderConfig
+		* - 此接口与setLocalViewConfig&setVideoEncoderConfig里面的mirror重合，使用时只要使用其中一个即可
+		*/
+		virtual int setVideoMirrorMode(const AlivcLiveVideoPipelineMirrorMode mirrorMode) = 0;
+
 		/* **********************互动模式下特定API******************************** */
 		/** 以下API是只在livePushMode为AlivcLivePushInteractiveMode，即只在直播SDK工作在互动模式下才可以使用
 		 *  非互动模式调用以下API将无任何效果，特定API包括：
@@ -1120,16 +1268,6 @@ namespace AliVCSDK_ARTC
 		 * @note 此接口只是控制指定视频流上是否发送黑帧，采集和数据发送不会停止
 		 */
 		virtual int muteLocalCamera(bool mute) = 0;
-
-		/**
-		 * @brief 上传crash埋点信息
-		 * @param collect_info key表示买点的key；value为key对应的值
-		 * @param is_restart true表示上传的为上一次的crash信息；false为本次crash信息
-		 * @return
-		 * - 0: 成功
-		 * - 非0: 失败
-		 */
-		virtual int sendCrashCollectStat(Dictionary collect_info, bool is_restart) = 0;
 
 		/**
 		 * @brief 根据桌面Id进行屏幕分享
@@ -1168,7 +1306,7 @@ namespace AliVCSDK_ARTC
 		virtual int switchScreenToCamera() = 0;
 
 		/**
-		 * @brief 停止屏幕分享
+		 * @brief 暂停屏幕分享
 		 * @return
 		 * - 0: 成功
 		 * - <0: 失败
@@ -1184,11 +1322,19 @@ namespace AliVCSDK_ARTC
 		virtual int resumeScreenShare() = 0;
 
 		/**
+		 * @brief 停止屏幕分享
+		 * @return
+		 * - 0: 成功
+		 * - <0: 失败
+		*/
+		virtual int stopScreenShare() = 0;
+
+		/**
 		 * @brief 获取屏幕分享源信息
 		 * @return AlivcLiveScreenSourceList 返回屏幕共享源列表，详见 {@link AliRTCSdk::AlivcLiveScreenSourceList}
 		 * @note 请在遍历完屏幕共享源列表后调用其release成员方法，由SDK内部释放相关资源
 		 */
-		virtual AlivcLiveScreenSourceList* getScreenShareSourceInfo() = 0;
+		virtual AlivcLiveScreenSourceList* getScreenShareSourceInfo(AlivcLiveScreenShareType shareType) = 0;
 
 		/**
 		 * @brief 获取当前屏幕共享源Id
@@ -1221,6 +1367,36 @@ namespace AliVCSDK_ARTC
 		 * - 非0: 失败
 		 */
 		virtual int pushExternalVideoFrame(const AlivcLiveVideoRawData &frame, AlivcLiveVideoTrack type) = 0;
+
+		/**
+		 * @brief 新增外部音频流
+		 * @param config 外部音频流配置 详见 {@link AlivcLiveExternalAudioStreamConfig}
+		 * @return
+		 * - >0: 外部音频流Id
+		 * - <0: 失败
+		 */
+		virtual int AddExternalAudioStream(const AlivcLiveExternalAudioStreamConfig& config) = 0;
+
+		/**
+	     * @brief 移除外部音频流
+	     * @param streamId 外部音频流Id
+	     * @return
+	     * - 0: 成功
+	     * - 非0: 失败
+	     */
+		virtual int RemoveExternalAudioStream(int streamId) = 0;
+
+		/**
+		 * @brief 输入外部音频数据
+		 * @param streamId 外部音频流Id
+		 * @param data 外部音频裸数据 详见 {@link AlivcLiveAudioRawData}
+		 * @return
+		 * - <0: 表示失败;
+		 * - 0: 表示成功;
+		 * - 返回值为 {@link AliEngineErrorAudioBufferFull} 时，需要在间隔投递数据时间长度后再次重试投递
+		 * @note 为了保证语音连续性，sdk内部会有buffer缓存送进来的音频数据，以每次送10ms数据为例，如果返回{@link AliEngineErrorAudioBufferFull}时，说明内部缓冲区已满，建议等待20ms后再重新送当前数据帧；
+		 */
+		virtual int PushExternalAudioStreamRawData(int streamId, AlivcLiveAudioRawData& data) = 0;
 
 		/**
 		 * @brief 设置是否启用外部音频输入推流
@@ -1473,6 +1649,29 @@ namespace AliVCSDK_ARTC
 		 * - 非0: 失败
 		 */
 		virtual int seekExternalFilePosMs(int64_t posMs) = 0;
+        
+        /**
+        * @brief 根据桌面Id进行屏幕分享
+        * @param windowId 窗口Id(可通过GetScreenShareSourceInfo接口获取)
+        * @return
+        * - 0: 成功
+        * - <0: 失败
+        * @note
+        * - 配置指定区域分享时，分享区域最小分辨率为16 x 16，设置区域小于最小分辨率时重置为最小分辨率
+        * - 配置指定区域分享时，设置分享区域超过实际桌面分辨率时，将分享整个桌面
+        */
+        virtual int starScreenShareByWindowId(unsigned int windowId) = 0;
+
+        /**
+        * @brief 获取分享的窗口是否有效
+        * @param windowId 窗口Id(可通过GetScreenShareSourceInfo接口获取)
+        * @return
+        * - true:  有效
+        * - false: 无效
+        * @note
+        * - 多次无效可判定为用户窗口分享结束
+        */
+        virtual bool checkScreenShareWindowIdValid(unsigned int windowId) = 0;
 
         /**
          * @brief 以josn字符串的格式，设置自定义属性
@@ -1489,6 +1688,27 @@ namespace AliVCSDK_ARTC
          * @return 属性值
         */
         virtual String getParameter(const char* parameter) = 0;
+		/**
+		 * @brief 是否推送第二条音频流
+		 * @param enabled 是否开启/关闭第二条音频流推送
+		 - true: 开启音频流推送
+		 - false: 关闭音频流推送
+		 * @return
+		 - 0: 设置成功
+		 - <0: 设置失败，返回错误码
+		 * @note SDK默认设置推送音频流，在加入频道前也可以调用此接口修改默认值，并在加入频道成功时生效
+		 */
+		virtual int publishLocalDualAudioStream(bool enabled) = 0;
+
+		/**
+		 * @brief 扩展API
+		 * @param parameter 扩展参数
+		 * @return
+		 - 0: 设置成功
+		 - <0: 设置失败，返回错误码
+		 * @note 扩展设置接口
+		 */
+		virtual int SetParameter(const char* parameter) = 0;
 	
 	};
 };  // namespace AliVCSDK_ARTC

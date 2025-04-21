@@ -64,6 +64,26 @@ namespace AliVCSDK_ARTC
     }AlivcLiveVideoScale;
 
     /**
+     * @brief 视频流类型
+     */
+    typedef enum {
+      /** 摄像头流 */
+      stream_camera = 1,
+      /** 屏幕共享流 */
+      stream_screen = 2,
+    } AlivcLivePlayVideoStreamType;
+
+    /**
+     * @brief 音频流类型
+     */
+    typedef enum {
+      /** mic流 */
+      stream_mic = 1,
+      stream_dual_audio = 2,
+      /** mic流 */
+    } AlivcLivePlayAudioStreamType;
+
+    /**
      * @brief 拉流配置类
      * @note setup初始化用
      */
@@ -78,6 +98,10 @@ namespace AliVCSDK_ARTC
         AlivcLiveRenderMode renderMode = AlivcLiveRenderMode::AlivcLiveRenderModeAuto;
         /** 旋转角度，默认值为 {@link AliRTCSdk::AlivcLiveRotationMode_0} */
         AlivcLiveRotationMode rotation = AlivcLiveRotationMode_0;
+        /** 指定播放的音频流类型 */
+        AlivcLivePlayAudioStreamType audioType = AlivcLivePlayAudioStreamType::stream_mic;
+        /** 指定播放的视频流类型*/
+        AlivcLivePlayVideoStreamType videoType = AlivcLivePlayVideoStreamType::stream_camera;
     }AlivcLivePlayConfig ;
 
         
@@ -201,6 +225,22 @@ namespace AliVCSDK_ARTC
          * @see AlivcLiveMode
          */
         virtual AlivcLiveMode getMode() = 0;
+
+         /**
+         * @brief 暂停播放音频流
+         * @return
+         * - 0: 成功
+         * - 非0: 失败
+         */
+        virtual int pauseAudioPlaying() = 0;
+
+        /**
+         * @brief 恢复播放音频流
+         * @return
+         * - 0: 成功
+         * - 非0: 失败
+         */
+        virtual int resumeAudioPlaying() = 0;
 
         /**
          * @brief 设置全局视频解码参数
